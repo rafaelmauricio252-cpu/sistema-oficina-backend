@@ -17,33 +17,45 @@ async function buscarClientes(req, res) {
       return res.status(400).json({ erro: 'Parâmetro de busca é obrigatório' });
     }
 
-    // Primeiro tentar busca exata por nome
-    const clientes = await db('clientes')
+    // Primeiro tentar busca por nome (prioritário)
+    const clientesPorNome = await db('clientes')
       .select('id', 'nome', 'cpf_cnpj', 'telefone', 'email', 'endereco')
       .where('nome', 'ilike', `%${q}%`)
       .orderBy('nome')
       .limit(10);
 
-    // Se não encontrar resultados e a busca contém dígitos, tentar CPF/telefone
-    if (clientes.length === 0 && /\d/.test(q)) {
+    // Se a busca contém dígitos, tentar busca por CPF/telefone também
+    if (/\d/.test(q)) {
       const documentoLimpo = removerFormatacao(q);
-      const clientesAdicionais = await db('clientes')
+      const clientesPorDocumento = await db('clientes')
         .select('id', 'nome', 'cpf_cnpj', 'telefone', 'email', 'endereco')
         .where('cpf_cnpj', 'like', `%${documentoLimpo}%`)
         .orWhere('telefone', 'like', `%${documentoLimpo}%`)
         .orderBy('nome')
         .limit(10);
 
+      // Combinar resultados, evitando duplicatas
+      const todosClientes = [...clientesPorNome];
+      const idsExistentes = new Set(clientesPorNome.map(c => c.id));
+
+      for (const cliente of clientesPorDocumento) {
+        if (!idsExistentes.has(cliente.id)) {
+          todosClientes.push(cliente);
+          idsExistentes.add(cliente.id);
+        }
+      }
+
       res.json({
         sucesso: true,
-        total: clientesAdicionais.length,
-        clientes: clientesAdicionais
+        total: todosClientes.length,
+        clientes: todosClientes.slice(0, 10) // Limitar a 10 após combinar
       });
     } else {
+      // Se não contém dígitos, apenas retornar resultados por nome
       res.json({
         sucesso: true,
-        total: clientes.length,
-        clientes: clientes
+        total: clientesPorNome.length,
+        clientes: clientesPorNome
       });
     }
 
