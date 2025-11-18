@@ -382,11 +382,20 @@ describe('⚙️ BACKEND API - Endpoints de CLIENTES', () => {
 
     it('Deve buscar cliente por CPF/CNPJ', async () => {
       const response = await request(app)
-        .get('/api/clientes/buscar?q=77777777777');
+        .get('/api/clientes/buscar?q=48813610661');
 
       expect(response.status).toBe(200);
       expect(response.body.clientes.length).toBeGreaterThan(0);
       expect(response.body.clientes[0].cpf_cnpj).toBe('48813610661');
+    });
+
+    it('Deve buscar cliente por telefone', async () => {
+      const response = await request(app)
+        .get('/api/clientes/buscar?q=777777777');
+
+      expect(response.status).toBe(200);
+      expect(response.body.clientes.length).toBeGreaterThan(0);
+      expect(response.body.clientes[0].telefone).toBe('11777777777');
     });
 
     it('Deve limitar resultados a 10', async () => {
