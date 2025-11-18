@@ -305,6 +305,14 @@ async function deletarMecanico(req, res) {
       return res.status(404).json({ erro: 'Mecânico não encontrado' });
     }
 
+    // Verificar se o mecânico tem ordens de serviço ligadas
+    const osVinculada = await db('ordem_servico').where({ mecanico_id: id }).first();
+    if (osVinculada) {
+      return res.status(400).json({
+        erro: 'Não é possível deletar mecânico com ordens de serviço vinculadas'
+      });
+    }
+
     await db('mecanicos').where({ id }).del();
 
     res.json({

@@ -183,7 +183,7 @@ describe('Testes das Rotas de Mecânicos', () => {
   // Testes DELETE /api/mecanicos/:id
   // ============================================
 
-  test('DELETE /api/mecanicos/:id - Deve deletar um mecânico com sucesso', async () => {
+  test('DELETE /api/mecanicos/:id - Deve deletar um mecânico com sucesso quando não tem OS vinculadas', async () => {
     const createResponse = await criarMecanicoValido(app, { nome: 'Mecânico a Deletar' });
     const mecanicoId = createResponse.body.mecanico.id;
 
@@ -196,6 +196,48 @@ describe('Testes das Rotas de Mecânicos', () => {
     // Verificar se o mecânico foi realmente deletado
     const getResponse = await request(app).get(`/api/mecanicos/${mecanicoId}`);
     expect(getResponse.statusCode).toBe(404);
+  });
+
+  test('DELETE /api/mecanicos/:id - Deve falhar ao deletar mecânico com OS vinculadas', async () => {
+    // Criar os dados necessários para uma OS de teste
+    await db.raw(`
+      INSERT INTO clientes (nome, cpf_cnpj, telefone)
+      VALUES ('Cliente OS Teste', '11122233344', '11999999999');
+    `);
+    const [cliente] = await db('clientes').where({ cpf_cnpj: '11122233344' }).select('id');
+
+    await db.raw(`
+      INSERT INTO veiculos (cliente_id, placa, marca, modelo)
+      VALUES (?, 'OS123', 'Teste', 'Teste');
+    `, [cliente.id]);
+    const [veiculo] = await db('veiculos').where({ placa: 'OS123' }).select('id');
+
+    await db.raw(`
+      INSERT INTO servicos (nome, preco_padrao)
+      VALUES ('Servico Teste', 100);
+    `);
+    const [servico] = await db('servicos').where({ nome: 'Servico Teste' }).select('id');
+
+    // Criar um mecânico
+    const mecanicoResponse = await criarMecanicoValido(app, { nome: 'Mecânico com OS' });
+    const mecanicoId = mecanicoResponse.body.mecanico ? mecanicoResponse.body.mecanico.id : mecanicoResponse.body.id;
+
+    // Criar uma OS diretamente no banco para garantir o vínculo
+    await db('ordem_servico').insert({
+      cliente_id: cliente.id,
+      veiculo_id: veiculo.id,
+      mecanico_id: mecanicoId,
+      data_abertura: new Date().toISOString(),
+      status: 'Aguardando',
+      observacoes: 'Teste de vínculo',
+      valor_total: 100
+    });
+
+    // Tentar deletar o mecânico deve falhar
+    const response = await request(app).delete(`/api/mecanicos/${mecanicoId}`);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body.erro).toBe('Não é possível deletar mecânico com ordens de serviço vinculadas');
   });
 
   test('DELETE /api/mecanicos/:id - Deve retornar 404 se tentar deletar mecânico não encontrado', async () => {
