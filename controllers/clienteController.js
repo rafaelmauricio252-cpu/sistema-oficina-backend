@@ -12,27 +12,41 @@ const { removerFormatacao, capitalizarNome } = require('../utils/formatadores');
 async function buscarClientes(req, res) {
   try {
     const { q } = req.query;
-    
+
     if (!q || q.trim() === '') {
       return res.status(400).json({ erro: 'Parâmetro de busca é obrigatório' });
     }
-    
-    const documentoLimpo = removerFormatacao(q);
-    
+
+    // Primeiro tentar busca exata por nome
     const clientes = await db('clientes')
       .select('id', 'nome', 'cpf_cnpj', 'telefone', 'email', 'endereco')
-      .where('nome', 'ilike', `%${q}%`) // 'ilike' é case-insensitive no PostgreSQL
-      .orWhere('cpf_cnpj', 'like', `%${documentoLimpo}%`)
-      .orWhere('telefone', 'like', `%${documentoLimpo}%`)
+      .where('nome', 'ilike', `%${q}%`)
       .orderBy('nome')
       .limit(10);
-    
-    res.json({
-      sucesso: true,
-      total: clientes.length,
-      clientes: clientes
-    });
-    
+
+    // Se não encontrar resultados e a busca contém dígitos, tentar CPF/telefone
+    if (clientes.length === 0 && /\d/.test(q)) {
+      const documentoLimpo = removerFormatacao(q);
+      const clientesAdicionais = await db('clientes')
+        .select('id', 'nome', 'cpf_cnpj', 'telefone', 'email', 'endereco')
+        .where('cpf_cnpj', 'like', `%${documentoLimpo}%`)
+        .orWhere('telefone', 'like', `%${documentoLimpo}%`)
+        .orderBy('nome')
+        .limit(10);
+
+      res.json({
+        sucesso: true,
+        total: clientesAdicionais.length,
+        clientes: clientesAdicionais
+      });
+    } else {
+      res.json({
+        sucesso: true,
+        total: clientes.length,
+        clientes: clientes
+      });
+    }
+
   } catch (erro) {
     console.error('Erro ao buscar clientes:', erro);
     res.status(500).json({ erro: 'Erro ao buscar clientes' });
