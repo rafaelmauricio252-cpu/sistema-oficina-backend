@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Ordem de Serviço - Oficina Mecânica</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🚗 Nova Ordem de Serviço</h1>
+            <p class="subtitle">Sistema de Gestão de Oficina Mecânica</p>
+        </header>
+
+        <form id="formOS" class="form-os">
+            
+            <!-- SEÇÃO: CLIENTE -->
+            <section class="form-section">
+                <h2 class="section-title">👤 Cliente</h2>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="cliente">Cliente *</label>
+                        <div class="input-with-button">
+                            <select id="cliente" name="cliente_id" required>
+                                <option value="">Selecione um cliente...</option>
+                            </select>
+                            <button type="button" class="btn-secondary" id="btnNovoCliente">
+                                + Novo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Novo Cliente (oculto inicialmente) -->
+                <div id="modalCliente" class="modal-inline hidden">
+                    <h3>Cadastro Rápido de Cliente</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clienteNome">Nome Completo *</label>
+                            <input type="text" id="clienteNome" placeholder="Nome do cliente">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteCpfCnpj">CPF/CNPJ *</label>
+                            <input type="text" id="clienteCpfCnpj" placeholder="000.000.000-00" maxlength="18">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clienteTelefone">Telefone *</label>
+                            <input type="text" id="clienteTelefone" placeholder="(00) 00000-0000" maxlength="15">
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteEmail">E-mail</label>
+                            <input type="email" id="clienteEmail" placeholder="cliente@email.com">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" id="btnCancelarCliente">Cancelar</button>
+                        <button type="button" class="btn-primary" id="btnSalvarCliente">Salvar Cliente</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: VEÍCULO -->
+            <section class="form-section">
+                <h2 class="section-title">🚙 Veículo</h2>
+                
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="veiculo">Veículo *</label>
+                        <div class="input-with-button">
+                            <select id="veiculo" name="veiculo_id" required disabled>
+                                <option value="">Selecione um cliente primeiro...</option>
+                            </select>
+                            <button type="button" class="btn-secondary" id="btnNovoVeiculo" disabled>
+                                + Novo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Novo Veículo (oculto inicialmente) -->
+                <div id="modalVeiculo" class="modal-inline hidden">
+                    <h3>Cadastro Rápido de Veículo</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="veiculoPlaca">Placa *</label>
+                            <input type="text" id="veiculoPlaca" placeholder="ABC-1234 ou ABC1D23" maxlength="8">
+                        </div>
+                        <div class="form-group">
+                            <label for="veiculoMarca">Marca *</label>
+                            <input type="text" id="veiculoMarca" placeholder="Ex: Volkswagen">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="veiculoModelo">Modelo *</label>
+                            <input type="text" id="veiculoModelo" placeholder="Ex: Gol">
+                        </div>
+                        <div class="form-group">
+                            <label for="veiculoAno">Ano *</label>
+                            <input type="number" id="veiculoAno" placeholder="2020" min="1900" max="2026">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="veiculoCor">Cor</label>
+                            <input type="text" id="veiculoCor" placeholder="Ex: Branco">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" id="btnCancelarVeiculo">Cancelar</button>
+                        <button type="button" class="btn-primary" id="btnSalvarVeiculo">Salvar Veículo</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: DADOS DA OS -->
+            <section class="form-section">
+                <h2 class="section-title">📋 Dados da Ordem de Serviço</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mecanico">Mecânico Responsável *</label>
+                        <select id="mecanico" name="mecanico_id" required>
+                            <option value="">Selecione um mecânico...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dataAbertura">Data de Abertura *</label>
+                        <input type="date" id="dataAbertura" name="data_abertura" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="status">Status *</label>
+                        <select id="status" name="status" required>
+                            <option value="Aguardando">Aguardando</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Concluída">Concluída</option>
+                            <option value="Pago">Pago</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dataConclusao">Data de Conclusão</label>
+                        <input type="date" id="dataConclusao" name="data_conclusao">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="descricaoProblema">Descrição do Problema *</label>
+                        <textarea id="descricaoProblema" name="descricao_problema" rows="3" 
+                                  placeholder="Descreva o problema relatado pelo cliente..." required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="observacoes">Observações Adicionais</label>
+                        <textarea id="observacoes" name="observacoes" rows="2" 
+                                  placeholder="Observações gerais sobre o serviço..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: SERVIÇOS -->
+            <section class="form-section">
+                <h2 class="section-title">⚙️ Serviços</h2>
+                
+                <div class="add-item-container">
+                    <select id="selectServico" class="select-item">
+                        <option value="">Selecione um serviço...</option>
+                    </select>
+                    <button type="button" class="btn-add" id="btnAdicionarServico">+ Adicionar</button>
+                </div>
+
+                <div id="listaServicos" class="items-list">
+                    <p class="empty-message">Nenhum serviço adicionado</p>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: PEÇAS -->
+            <section class="form-section">
+                <h2 class="section-title">🔧 Peças</h2>
+                
+                <div class="add-item-container">
+                    <input type="text" id="buscaPeca" class="input-search" 
+                           placeholder="Buscar peça por nome ou código...">
+                    <div id="resultadosBusca" class="autocomplete-results hidden"></div>
+                </div>
+
+                <div id="listaPecas" class="items-list">
+                    <p class="empty-message">Nenhuma peça adicionada</p>
+                </div>
+            </section>
+
+            <!-- SEÇÃO: FOTOS DA OS -->
+<section class="form-section">
+    <h2 class="section-title">📸 Fotos da OS (opcional)</h2>
+    
+    <div class="add-item-container">
+        <!-- ANTES estava sem "multiple" -->
+        <input type="file" id="fotoOS" accept="image/*" class="input-search" multiple>
+    </div>
+
+    <div id="listaFotos" class="items-list">
+        <p class="empty-message">Nenhuma foto selecionada</p>
+    </div>
+</section>
+
+
+            <!-- SEÇÃO: VALORES -->
+            <section class="form-section">
+                <h2 class="section-title">💰 Valores</h2>
+                
+                <div class="resumo-valores">
+                    <div class="valor-item">
+                        <span>Valor dos Serviços:</span>
+                        <strong id="valorServicos">R$ 0,00</strong>
+                    </div>
+                    <div class="valor-item">
+                        <span>Valor das Peças:</span>
+                        <strong id="valorPecas">R$ 0,00</strong>
+                    </div>
+                    <div class="valor-item">
+                        <span>Subtotal:</span>
+                        <strong id="subtotal">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="desconto">Desconto (R$)</label>
+                        <input type="number" id="desconto" name="desconto" 
+                               value="0" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="formaPagamento">Forma de Pagamento</label>
+                        <select id="formaPagamento" name="forma_pagamento">
+                            <option value="">Selecione...</option>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Cartão">Cartão</option>
+                            <option value="PIX">PIX</option>
+                            <option value="Boleto">Boleto</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="total-final">
+                    <span>VALOR TOTAL:</span>
+                    <strong id="valorTotal">R$ 0,00</strong>
+                </div>
+            </section>
+
+            <!-- BOTÕES DE AÇÃO -->
+            <div class="form-actions">
+                <button type="button" class="btn-secondary btn-large" id="btnCancelar">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-primary btn-large" id="btnSalvar">
+                    💾 Salvar Ordem de Serviço
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Toast para notificações -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Processando...</p>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="oficina-override-vehicles.js"></script>
+</body>
+</html>

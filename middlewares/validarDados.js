@@ -1,0 +1,269 @@
+// ============================================
+// MIDDLEWARE DE VALIDAÇÃO
+// ============================================
+
+const { validarDocumento, validarTelefone, validarEmail, validarPlaca, validarData, validarDatasOS, validarValorPositivo, validarPagamento } = require('../utils/validacoes');
+
+/**
+ * Valida dados de cliente
+ */
+function validarCliente(req, res, next) {
+  const { nome, cpf_cnpj, telefone, email } = req.body;
+  
+  // Validações obrigatórias
+  if (!nome || nome.trim() === '') {
+    return res.status(400).json({ erro: 'Nome é obrigatório' });
+  }
+  
+  if (!cpf_cnpj || cpf_cnpj.trim() === '') {
+    return res.status(400).json({ erro: 'CPF/CNPJ é obrigatório' });
+  }
+  
+  if (!telefone || telefone.trim() === '') {
+    return res.status(400).json({ erro: 'Telefone é obrigatório' });
+  }
+  
+  // Validação de CPF/CNPJ
+  if (!validarDocumento(cpf_cnpj)) {
+    return res.status(400).json({ erro: 'CPF/CNPJ inválido' });
+  }
+  
+  // Validação de telefone
+  if (!validarTelefone(telefone)) {
+    return res.status(400).json({ erro: 'Telefone inválido' });
+  }
+  
+  // Validação de email (se fornecido)
+  if (email && !validarEmail(email)) {
+    return res.status(400).json({ erro: 'Email inválido' });
+  }
+  
+  next();
+}
+
+/**
+ * Valida dados de veículo
+ */
+function validarVeiculo(req, res, next) {
+  const { cliente_id, placa, marca, modelo, ano } = req.body;
+  
+    // Cliente é obrigatório apenas para POST (criação)
+    if (req.method === 'POST' && !cliente_id) {
+      return res.status(400).json({ erro: 'Cliente é obrigatório' });
+    }  
+  if (!placa || placa.trim() === '') {
+    return res.status(400).json({ erro: 'Placa é obrigatória' });
+  }
+  
+  if (!marca || marca.trim() === '') {
+    return res.status(400).json({ erro: 'Marca é obrigatória' });
+  }
+  
+  if (!modelo || modelo.trim() === '') {
+    return res.status(400).json({ erro: 'Modelo é obrigatório' });
+  }
+  
+  // Validação de placa
+  if (!validarPlaca(placa)) {
+    return res.status(400).json({ erro: 'Placa inválida' });
+  }
+  
+  // Validação de ano (se fornecido)
+  if (ano) {
+    const anoNum = parseInt(ano);
+    const anoAtual = new Date().getFullYear();
+    
+    if (isNaN(anoNum) || anoNum < 1900 || anoNum > anoAtual + 1) {
+      return res.status(400).json({ erro: 'Ano inválido' });
+    }
+  }
+  
+  next();
+}
+
+/**
+ * Valida dados da Ordem de Serviço
+ */
+function validarOS(req, res, next) {
+  const { 
+    cliente_id, 
+    veiculo_id, 
+    mecanico_id,
+    data_abertura,
+    data_conclusao,
+    status,
+    forma_pagamento,
+    desconto,
+    servicos,
+    pecas
+  } = req.body;
+  
+  // ============================================
+  // REGRAS OBRIGATÓRIAS DO FORMULÁRIO
+  // ============================================
+  
+  // 1. Cliente obrigatório
+  if (!cliente_id) {
+    return res.status(400).json({ erro: 'Cliente é obrigatório' });
+  }
+  
+  // 2. Veículo obrigatório
+  if (!veiculo_id) {
+    return res.status(400).json({ erro: 'Veículo é obrigatório' });
+  }
+  
+  // 3. Mecânico obrigatório
+  if (!mecanico_id) {
+    return res.status(400).json({ erro: 'Mecânico responsável é obrigatório' });
+  }
+  
+  // 4. Data de abertura obrigatória
+  if (!data_abertura) {
+    return res.status(400).json({ erro: 'Data de abertura é obrigatória' });
+  }
+  
+  // 5. Validar formato de data
+  if (!validarData(data_abertura)) {
+    return res.status(400).json({ erro: 'Data de abertura inválida' });
+  }
+  
+  // 6. Validar data de conclusão (se fornecida)
+  if (data_conclusao) {
+    if (!validarData(data_conclusao)) {
+      return res.status(400).json({ erro: 'Data de conclusão inválida' });
+    }
+    
+    // 7. Data de conclusão deve ser >= data de abertura
+    if (!validarDatasOS(data_abertura, data_conclusao)) {
+      return res.status(400).json({ 
+        erro: 'Data de conclusão não pode ser anterior à data de abertura' 
+      });
+    }
+  }
+  
+  // 8. Status obrigatório
+  if (!status) {
+    return res.status(400).json({ erro: 'Status é obrigatório' });
+  }
+  
+  // 9. Validar status permitidos
+  const statusPermitidos = ['Aguardando', 'Em Andamento', 'Concluído', 'Pago'];
+  if (!statusPermitidos.includes(status)) {
+    return res.status(400).json({ 
+      erro: 'Status inválido. Use: Aguardando, Em Andamento, Concluído ou Pago' 
+    });
+  }
+  
+  // 10. Se status = "Pago", forma de pagamento é obrigatória
+  const validacaoPagamento = validarPagamento(status, forma_pagamento);
+  if (!validacaoPagamento.valido) {
+    return res.status(400).json({ erro: validacaoPagamento.mensagem });
+  }
+  
+  // 11. Validar desconto (se fornecido)
+  if (desconto !== undefined && desconto !== null && desconto !== '') {
+    if (!validarValorPositivo(desconto)) {
+      return res.status(400).json({ erro: 'Desconto deve ser um valor positivo' });
+    }
+  }
+  
+  // 12. Pelo menos 1 serviço OU 1 peça deve ser adicionado
+  const temServicos = servicos && servicos.length > 0;
+  const temPecas = pecas && pecas.length > 0;
+  
+  if (!temServicos && !temPecas) {
+    return res.status(400).json({ 
+      erro: 'Adicione pelo menos 1 serviço ou 1 peça à ordem de serviço' 
+    });
+  }
+  
+  // 13. Validar serviços (se fornecidos)
+  if (servicos && servicos.length > 0) {
+    for (let i = 0; i < servicos.length; i++) {
+      const servico = servicos[i];
+      
+      if (!servico.servico_id) {
+        return res.status(400).json({ 
+          erro: `Serviço ${i + 1}: ID do serviço é obrigatório` 
+        });
+      }
+      
+      if (!servico.quantidade || servico.quantidade <= 0) {
+        return res.status(400).json({ 
+          erro: `Serviço ${i + 1}: Quantidade deve ser maior que 0` 
+        });
+      }
+      
+      if (!servico.preco_unitario || servico.preco_unitario < 0) {
+        return res.status(400).json({ 
+          erro: `Serviço ${i + 1}: Preço deve ser maior ou igual a 0` 
+        });
+      }
+    }
+  }
+  
+  // 14. Validar peças (se fornecidas)
+  if (pecas && pecas.length > 0) {
+    for (let i = 0; i < pecas.length; i++) {
+      const peca = pecas[i];
+      
+      if (!peca.peca_id) {
+        return res.status(400).json({ 
+          erro: `Peça ${i + 1}: ID da peça é obrigatório` 
+        });
+      }
+      
+      if (!peca.quantidade || peca.quantidade <= 0) {
+        return res.status(400).json({ 
+          erro: `Peça ${i + 1}: Quantidade deve ser maior que 0` 
+        });
+      }
+      
+      if (!peca.preco_unitario || peca.preco_unitario < 0) {
+        return res.status(400).json({ 
+          erro: `Peça ${i + 1}: Preço deve ser maior ou igual a 0` 
+        });
+      }
+    }
+  }
+  
+  next();
+}
+
+/**
+ * Valida parâmetro ID (deve ser número inteiro positivo)
+ */
+function validarID(req, res, next) {
+  const { id } = req.params;
+  
+  const idNum = parseInt(id);
+  
+  if (isNaN(idNum) || idNum <= 0) {
+    return res.status(400).json({ erro: 'ID inválido' });
+  }
+  
+  next();
+}
+
+/**
+ * Valida parâmetro OS_ID (deve ser número inteiro positivo)
+ */
+function validarOSID(req, res, next) {
+  const { os_id } = req.params;
+
+  const idNum = parseInt(os_id);
+
+  if (isNaN(idNum) || idNum <= 0) {
+    return res.status(400).json({ erro: 'ID inválido' });
+  }
+
+  next();
+}
+
+module.exports = {
+  validarCliente,
+  validarVeiculo,
+  validarOS,
+  validarID,
+  validarOSID
+};

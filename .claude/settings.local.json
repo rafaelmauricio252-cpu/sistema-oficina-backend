@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gemini:*)",
+      "Bash(cat:*)",
+      "Bash(test:*)",
+      "Bash(npx vite)",
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(del srctypesdashboard.ts)",
+      "Bash(rm:*)",
+      "Bash(ping:*)",
+      "Bash(nul)",
+      "Bash(where gemini 2)",
+      "Bash(dir \"C:\\oficina-backend\\oficina-frontend\\src\\pages\\OrdemServico\" /b)",
+      "Bash(npm test:*)",
+      "Bash(npm run migrate:up:*)",
+      "Bash(psql:*)",
+      "Bash(node scripts/check-veiculos.js:*)",
+      "Bash(node:*)",
+      "Bash(del:*)",
+      "Bash(npm run migrate:create:*)",
+      "Bash(dir:*)",
+      "Bash(start http://localhost:5173/clientes)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
