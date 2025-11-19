@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "Sistema completo de gestão de oficina mecânica",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
