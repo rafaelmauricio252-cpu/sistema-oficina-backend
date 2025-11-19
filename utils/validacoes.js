@@ -122,7 +122,7 @@ function validarPagamento(status, formaPagamento) {
   return { valido: true };
 }
 
-module.exports = {
+export {
   validarCPF,
   validarCNPJ,
   validarDocumento,

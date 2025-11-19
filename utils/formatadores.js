@@ -93,7 +93,7 @@ function capitalizarNome(texto) {
     .join(' ');
 }
 
-module.exports = {
+export {
   formatarCPF,
   formatarCNPJ,
   formatarDocumento,
