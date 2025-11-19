@@ -126,7 +126,7 @@ async function deletarFoto(req, res) {
   }
 }
 
-module.exports = {
+export {
   uploadFoto,
   listarFotosOS,
   deletarFoto

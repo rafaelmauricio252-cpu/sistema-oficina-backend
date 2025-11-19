@@ -31,4 +31,4 @@ db.raw('SELECT 1')
     console.error('❌ Erro ao conectar com o banco de dados (Knex):', err);
   });
 
-module.exports = db;
+export default db;

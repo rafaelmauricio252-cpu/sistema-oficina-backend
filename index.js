@@ -2,9 +2,9 @@
 // PONTO DE ENTRADA DA APLICAÇÃO
 // ============================================
 
-require('dotenv').config();
+import 'dotenv/config';
 
-const { server } = require('./server');
+const { server } = await import('./server.js');
 
 const PORT = process.env.PORT || 3000;
 
@@ -25,5 +25,5 @@ server.listen(PORT, () => {
   console.log('==============================================\n');
 });
 
-module.exports = server;
+export default server;
 

@@ -39,4 +39,4 @@ router.put('/:id', validarID, validarVeiculo, veiculoController.atualizarVeiculo
 // DELETE /api/veiculos/:id
 router.delete('/:id', validarID, veiculoController.deletarVeiculo);
 
-module.exports = router;
+export default router;

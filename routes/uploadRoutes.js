@@ -69,4 +69,4 @@ router.use((err, req, res, next) => {
   next();
 });
 
-module.exports = router;
+export default router;
