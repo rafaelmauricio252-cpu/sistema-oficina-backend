@@ -2,10 +2,10 @@
 // ROTAS DE ORDEM DE SERVIÇO
 // ============================================
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const osController = require('../controllers/osController');
-const { validarOS, validarID } = require('../middlewares/validarDados');
+import osController from '../controllers/osController.js';
+import { validarOS, validarID } from '../middlewares/validarDados.js';
 
 // Criar nova Ordem de Serviço
 // POST /api/os

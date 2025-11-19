@@ -2,7 +2,7 @@
 // MIDDLEWARE DE VALIDAÇÃO
 // ============================================
 
-const { validarDocumento, validarTelefone, validarEmail, validarPlaca, validarData, validarDatasOS, validarValorPositivo, validarPagamento } = require('../utils/validacoes');
+import { validarDocumento, validarTelefone, validarEmail, validarPlaca, validarData, validarDatasOS, validarValorPositivo, validarPagamento } from '../utils/validacoes.js';
 
 /**
  * Valida dados de cliente

@@ -2,7 +2,7 @@
 // CONTROLLER DE ORDEM DE SERVIÇO (Refatorado com Knex.js)
 // ============================================
 
-const db = require('../config/db');
+import db from '../config/db.js';
 
 /**
  * Criar nova Ordem de Serviço

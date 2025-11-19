@@ -2,8 +2,8 @@
 // CONTROLLER DE VEÍCULOS (Refatorado com Knex.js)
 // ============================================
 
-const db = require('../config/db');
-const { removerFormatacao, limparPlaca } = require('../utils/formatadores');
+import db from '../config/db.js';
+import { removerFormatacao, limparPlaca } from '../utils/formatadores.js';
 
 /**
  * Listar veículos do cliente

@@ -2,10 +2,10 @@
 // ROTAS DE VEÍCULOS
 // ============================================
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const veiculoController = require('../controllers/veiculoController');
-const { validarVeiculo, validarID } = require('../middlewares/validarDados');
+import veiculoController from '../controllers/veiculoController.js';
+import { validarVeiculo, validarID } from '../middlewares/validarDados.js';
 
 // Buscar veículos (autocomplete por placa)
 // GET /api/veiculos/buscar?q=ABC

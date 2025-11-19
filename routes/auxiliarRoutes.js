@@ -2,10 +2,10 @@
 // ROTAS AUXILIARES - Mecânicos, Serviços, Dashboard
 // ============================================
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const auxiliarController = require('../controllers/auxiliarController');
-const { validarID } = require('../middlewares/validarDados');
+import auxiliarController from '../controllers/auxiliarController.js';
+import { validarID } from '../middlewares/validarDados.js';
 
 // ============================================
 // ROTAS DE MECÂNICOS

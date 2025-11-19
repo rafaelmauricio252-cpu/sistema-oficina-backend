@@ -2,7 +2,7 @@
 // CONTROLLER DE ESTOQUE (Refatorado com Knex.js)
 // ============================================
 
-const db = require('../config/db');
+import db from '../config/db.js';
 
 /**
  * Criar uma nova peça

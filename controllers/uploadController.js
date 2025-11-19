@@ -2,9 +2,9 @@
 // CONTROLLER DE UPLOAD (Refatorado com Knex.js)
 // ============================================
 
-const db = require('../config/db');
-const path = require('path');
-const fs = require('fs').promises;
+import db from '../config/db.js';
+import path from 'path';
+import fs from 'fs/promises';
 
 /**
  * Upload de foto da OS

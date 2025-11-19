@@ -2,11 +2,11 @@
 // ROTAS DE CLIENTES
 // ============================================
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const clienteController = require('../controllers/clienteController');
-const veiculoController = require('../controllers/veiculoController'); // Importar o controller de veículos
-const { validarCliente, validarID } = require('../middlewares/validarDados');
+import clienteController from '../controllers/clienteController.js';
+import veiculoController from '../controllers/veiculoController.js'; // Importar o controller de veículos
+import { validarCliente, validarID } from '../middlewares/validarDados.js';
 
 // Buscar clientes (autocomplete)
 // GET /api/clientes/buscar?q=joao

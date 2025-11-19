@@ -2,7 +2,7 @@
 // CONTROLLER AUXILIAR (Refatorado com Knex.js)
 // ============================================
 
-const db = require('../config/db');
+import db from '../config/db.js';
 
 /**
  * Listar todos os mecânicos ativos

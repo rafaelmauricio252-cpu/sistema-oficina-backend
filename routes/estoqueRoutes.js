@@ -2,10 +2,10 @@
 // ROTAS DE ESTOQUE
 // ============================================
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const estoqueController = require('../controllers/estoqueController');
-const { validarID } = require('../middlewares/validarDados');
+import estoqueController from '../controllers/estoqueController.js';
+import { validarID } from '../middlewares/validarDados.js';
 
 // Criar nova peça
 // POST /api/pecas

@@ -2,12 +2,12 @@
 // ROTAS DE UPLOAD
 // ============================================
 
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const uploadController = require('../controllers/uploadController');
-const { validarID, validarOSID } = require('../middlewares/validarDados');
+import multer from 'multer';
+import path from 'path';
+import uploadController from '../controllers/uploadController.js';
+import { validarID, validarOSID } from '../middlewares/validarDados.js';
 
 // Configuração do Multer (upload de arquivos)
 const storage = multer.diskStorage({

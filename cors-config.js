@@ -3,8 +3,8 @@
 // ============================================
 // Arquivo: server.js (ou onde você inicializa o Express)
 
-const express = require('express');
-const cors = require('cors');
+import express from 'express';
+import cors from 'cors';
 const app = express();
 
 // ============================================

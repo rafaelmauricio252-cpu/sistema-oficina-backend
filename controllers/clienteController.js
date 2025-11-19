@@ -2,8 +2,8 @@
 // CONTROLLER DE CLIENTES (Refatorado com Knex.js)
 // ============================================
 
-const db = require('../config/db'); // Alterado para usar a instância do Knex
-const { removerFormatacao, capitalizarNome } = require('../utils/formatadores');
+import db from '../config/db.js';
+import { removerFormatacao, capitalizarNome } from '../utils/formatadores.js';
 
 /**
  * Buscar clientes (autocomplete)
