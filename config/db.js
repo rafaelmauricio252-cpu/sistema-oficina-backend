@@ -1,10 +1,11 @@
 // config/db.js
-const knex = require('knex');
-const config = require('../knexfile');
+import 'dotenv/config';
+import knex from 'knex';
+import knexConfig from '../knexfile.js';
 
 const environment = process.env.NODE_ENV || 'development';
 
-// Em produção, usar DATABASE_URL (padrão do Railway/Heroku)
+// Em produção, usar DATABASE_URL (padrão do Render)
 const dbConfig = process.env.DATABASE_URL && environment === 'production'
   ? {
       client: 'pg',
@@ -18,7 +19,7 @@ const dbConfig = process.env.DATABASE_URL && environment === 'production'
         directory: './migrations'
       }
     }
-  : config[environment];
+  : knexConfig[environment];
 
 const db = knex(dbConfig);
 

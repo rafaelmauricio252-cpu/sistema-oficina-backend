@@ -6,32 +6,36 @@
  */
 
 import { execSync } from 'child_process';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
 
-// Aplicar migrations antes de iniciar o servidor
-console.log('🔄 Aplicando migrations...');
-try {
-  execSync('npx node-pg-migrate up', { stdio: 'inherit' });
-  console.log('✅ Migrations aplicadas com sucesso!');
-} catch (error) {
-  console.error('❌ Erro ao aplicar migrations:', error.message);
-  process.exit(1);
+async function iniciarServidor() {
+  // Aplicar migrations antes de iniciar o servidor
+  console.log('🔄 Aplicando migrations...');
+  try {
+    execSync('npx node-pg-migrate up', { stdio: 'inherit' });
+    console.log('✅ Migrations aplicadas com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao aplicar migrations:', error.message);
+    process.exit(1);
+  }
+
+  // Iniciar o servidor após aplicar as migrations
+  console.log('🚀 Iniciando servidor...');
+  const { server } = await import('./server.js');
+
+  const PORT = process.env.PORT || 3000;
+
+  server.listen(PORT, () => {
+    console.log('\n==============================================');
+    console.log('🚗  SERVIDOR DA OFICINA INICIADO!');
+    console.log('==============================================');
+    console.log(`📡 Rodando em: http://localhost:${PORT}`);
+    console.log(`🕐 Iniciado em: ${new Date().toLocaleString('pt-BR')}`);
+    console.log('==============================================\n');
+  });
+
+  return server;
 }
 
-// Iniciar o servidor após aplicar as migrations
-console.log('🚀 Iniciando servidor...');
-const { server } = await import('./server.js');
+iniciarServidor();
 
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
-  console.log('\n==============================================');
-  console.log('🚗  SERVIDOR DA OFICINA INICIADO!');
-  console.log('==============================================');
-  console.log(`📡 Rodando em: http://localhost:${PORT}`);
-  console.log(`🕐 Iniciado em: ${new Date().toLocaleString('pt-BR')}`);
-  console.log('==============================================\n');
-});
-
-export default server;
+export default iniciarServidor;
