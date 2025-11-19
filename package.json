@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "migrate": "node-pg-migrate up",
-    "start": "node server.js",
+    "start": "node startup.js",
     "dev": "npm run migrate && nodemon server.js",
     "test": "jest --runInBand",
     "migrate:create": "node-pg-migrate create",
