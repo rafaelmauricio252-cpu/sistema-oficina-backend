@@ -1,14 +1,14 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.sql(`
     CREATE TABLE IF NOT EXISTS clientes (
         id SERIAL PRIMARY KEY,
@@ -143,6 +143,27 @@ export const down = (pgm) => {
   pgm.dropIndex('clientes', 'idx_clientes_cpf_cnpj', { ifExists: true });
   pgm.dropIndex('veiculos', 'idx_veiculos_placa', { ifExists: true });
   pgm.dropIndex('pecas', 'idx_pecas_numero_peca', { ifExists: true });
+  pgm.dropIndex('ordem_servico', 'idx_os_cliente_id', { ifExists: true });
+  pgm.dropIndex('ordem_servico', 'idx_os_veiculo_id', { ifExists: true });
+  pgm.dropIndex('ordem_servico', 'idx_os_mecanico_id', { ifExists: true });
+
+  pgm.dropTable('os_fotos', { cascade: true });
+  pgm.dropTable('os_servicos', { cascade: true });
+  pgm.dropTable('os_pecas', { cascade: true });
+  pgm.dropTable('ordem_servico', { cascade: true });
+  pgm.dropTable('veiculos', { cascade: true });
+  pgm.dropTable('clientes', { cascade: true });
+  pgm.dropTable('mecanicos', { cascade: true });
+  pgm.dropTable('servicos', { cascade: true });
+  pgm.dropTable('pecas', { cascade: true });
+};
+
+/**
+ * @param pgm {import('node-pg-migrate').MigrationBuilder}
+ * @param run {() => void | undefined}
+ * @returns {Promise<void> | void}
+ */
+exports.down = (pgm) => {
   pgm.dropIndex('ordem_servico', 'idx_os_cliente_id', { ifExists: true });
   pgm.dropIndex('ordem_servico', 'idx_os_veiculo_id', { ifExists: true });
   pgm.dropIndex('ordem_servico', 'idx_os_mecanico_id', { ifExists: true });
