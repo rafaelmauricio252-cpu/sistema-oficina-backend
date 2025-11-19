@@ -8,6 +8,19 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 
+// Aplicar migrations automaticamente no ambiente de produção
+if (process.env.NODE_ENV === 'production') {
+  const { execSync } = require('child_process');
+  try {
+    console.log('🔄 Aplicando migrations antes de iniciar...');
+    execSync('npx node-pg-migrate up', { stdio: 'inherit' });
+    console.log('✅ Migrations aplicadas com sucesso!');
+  } catch (error) {
+    console.error('❌ Erro ao aplicar migrations:', error.message);
+    process.exit(1);
+  }
+}
+
 // Importar configurações
 const db = require('./config/db');
 
