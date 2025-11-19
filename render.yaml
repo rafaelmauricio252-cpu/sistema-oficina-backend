@@ -1,0 +1,13 @@
+services:
+- type: web
+  name: oficina-backend
+  env: node
+  buildCommand: npm install
+  startCommand: npm start
+  envVars:
+  - key: NODE_ENV
+    value: production
+databases:
+- name: postgresql-db
+  region: ohio # ou escolha a região mais próxima de você
+  plan: free
