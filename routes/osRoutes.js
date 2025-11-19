@@ -27,4 +27,4 @@ router.put('/:id', validarID, osController.atualizarOS);
 // DELETE /api/os/:id
 router.delete('/:id', validarID, osController.deletarOS);
 
-module.exports = router;
+export default router;

@@ -260,7 +260,7 @@ function validarOSID(req, res, next) {
   next();
 }
 
-module.exports = {
+export {
   validarCliente,
   validarVeiculo,
   validarOS,

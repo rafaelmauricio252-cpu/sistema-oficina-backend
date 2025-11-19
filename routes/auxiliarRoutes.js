@@ -75,4 +75,4 @@ router.get('/categorias', auxiliarController.listarCategorias);
 // GET /api/dashboard
 router.get('/dashboard', auxiliarController.obterEstatisticas);
 
-module.exports = router;
+export default router;

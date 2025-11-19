@@ -1,10 +1,10 @@
 // knexfile.js
-require('dotenv').config({ path: './.env' });
+import 'dotenv/config';
 
 /**
  * @type { Object.<string, import("knex").Knex.Config> }
  */
-module.exports = {
+export default {
   development: {
     client: 'pg',
     connection: {

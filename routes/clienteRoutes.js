@@ -47,5 +47,5 @@ router.put('/:id', validarID, validarCliente, clienteController.atualizarCliente
 // DELETE /api/clientes/:id
 router.delete('/:id', validarID, clienteController.deletarCliente);
 
-module.exports = router;
+export default router;
 
