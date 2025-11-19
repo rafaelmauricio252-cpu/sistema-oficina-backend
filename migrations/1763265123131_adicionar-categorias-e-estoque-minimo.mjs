@@ -1,14 +1,14 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-exports.shorthands = undefined;
+export const shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.up = (pgm) => {
+export const up = (pgm) => {
   // 1. Criar tabela de categorias de peças
   pgm.sql(`
     CREATE TABLE IF NOT EXISTS categorias_pecas (
@@ -80,7 +80,7 @@ exports.up = (pgm) => {
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.down = (pgm) => {
+export const down = (pgm) => {
   // Remover índices
   pgm.dropIndex('estoque_movimentacao', 'peca_id', { ifExists: true });
   pgm.dropIndex('estoque_movimentacao', 'os_id', { ifExists: true });

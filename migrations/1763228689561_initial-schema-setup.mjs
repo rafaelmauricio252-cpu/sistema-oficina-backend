@@ -1,14 +1,14 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-exports.shorthands = undefined;
+export const shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.up = (pgm) => {
+export const up = (pgm) => {
   pgm.sql(`
     CREATE TABLE IF NOT EXISTS clientes (
         id SERIAL PRIMARY KEY,
@@ -163,7 +163,7 @@ export const down = (pgm) => {
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.down = (pgm) => {
+export const down = (pgm) => {
   pgm.dropIndex('ordem_servico', 'idx_os_cliente_id', { ifExists: true });
   pgm.dropIndex('ordem_servico', 'idx_os_veiculo_id', { ifExists: true });
   pgm.dropIndex('ordem_servico', 'idx_os_mecanico_id', { ifExists: true });
