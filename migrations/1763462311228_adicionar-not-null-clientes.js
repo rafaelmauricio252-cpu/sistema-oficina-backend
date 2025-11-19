@@ -1,14 +1,14 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-exports.shorthands = undefined;
+export const shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.up = (pgm) => {
+export const up = (pgm) => {
   // Adicionar constraint NOT NULL na coluna cpf_cnpj
   pgm.alterColumn('clientes', 'cpf_cnpj', {
     notNull: true,
@@ -25,7 +25,7 @@ exports.up = (pgm) => {
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.down = (pgm) => {
+export const down = (pgm) => {
   // Reverter: remover constraint NOT NULL da coluna telefone
   pgm.alterColumn('clientes', 'telefone', {
     notNull: false,

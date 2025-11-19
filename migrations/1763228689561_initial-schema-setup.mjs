@@ -157,24 +157,3 @@ export const down = (pgm) => {
   pgm.dropTable('servicos', { cascade: true });
   pgm.dropTable('pecas', { cascade: true });
 };
-
-/**
- * @param pgm {import('node-pg-migrate').MigrationBuilder}
- * @param run {() => void | undefined}
- * @returns {Promise<void> | void}
- */
-export const down = (pgm) => {
-  pgm.dropIndex('ordem_servico', 'idx_os_cliente_id', { ifExists: true });
-  pgm.dropIndex('ordem_servico', 'idx_os_veiculo_id', { ifExists: true });
-  pgm.dropIndex('ordem_servico', 'idx_os_mecanico_id', { ifExists: true });
-
-  pgm.dropTable('os_fotos', { cascade: true });
-  pgm.dropTable('os_servicos', { cascade: true });
-  pgm.dropTable('os_pecas', { cascade: true });
-  pgm.dropTable('ordem_servico', { cascade: true });
-  pgm.dropTable('veiculos', { cascade: true });
-  pgm.dropTable('clientes', { cascade: true });
-  pgm.dropTable('mecanicos', { cascade: true });
-  pgm.dropTable('servicos', { cascade: true });
-  pgm.dropTable('pecas', { cascade: true });
-};
