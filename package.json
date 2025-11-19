@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "prestart": "node-pg-migrate up",
+    "migrate": "node-pg-migrate up",
     "start": "node server.js",
-    "dev": "nodemon server.js",
+    "dev": "npm run migrate && nodemon server.js",
     "test": "jest --runInBand",
     "migrate:create": "node-pg-migrate create",
     "migrate:up": "dotenv node-pg-migrate up",
