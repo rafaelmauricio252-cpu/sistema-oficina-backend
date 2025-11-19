@@ -3,14 +3,14 @@
 // ============================================
 
 // Importar dependências
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Aplicar migrations automaticamente no ambiente de produção
 if (process.env.NODE_ENV === 'production') {
-  const { execSync } = await import('child_process');
+  const { execSync } = require('child_process');
   try {
     console.log('🔄 Aplicando migrations antes de iniciar...');
     execSync('npx node-pg-migrate up', { stdio: 'inherit' });
@@ -22,15 +22,15 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Importar configurações
-import db from './config/db.js';
+const db = require('./config/db');
 
 // Importar rotas
-import clienteRoutes from './routes/clienteRoutes.js';
-import veiculoRoutes from './routes/veiculoRoutes.js';
-import osRoutes from './routes/osRoutes.js';
-import uploadRoutes from './routes/uploadRoutes.js';
-import auxiliarRoutes from './routes/auxiliarRoutes.js';
-import estoqueRoutes from './routes/estoqueRoutes.js';
+const clienteRoutes = require('./routes/clienteRoutes');
+const veiculoRoutes = require('./routes/veiculoRoutes');
+const osRoutes = require('./routes/osRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const auxiliarRoutes = require('./routes/auxiliarRoutes');
+const estoqueRoutes = require('./routes/estoqueRoutes');
 
 // ============================================
 // CONFIGURAÇÃO DO SERVIDOR
@@ -137,4 +137,4 @@ const server = app.listen(PORT, async () => {
   console.log('==============================================\n');
 });
 
-export { app, server };
+module.exports = { app, server };

@@ -497,7 +497,7 @@ async function buscarOSCompletaPorID(id) {
   return { ...os, servicos, pecas, fotos };
 }
 
-export {
+module.exports = {
   criarOS,
   listarOS,
   buscarOSPorID,

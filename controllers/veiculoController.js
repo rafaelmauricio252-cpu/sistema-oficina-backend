@@ -323,7 +323,7 @@ async function listarTodosVeiculos(req, res) {
   }
 }
 
-export {
+module.exports = {
   listarVeiculosDoCliente,
   cadastrarVeiculoRapido,
   buscarVeiculoPorID,

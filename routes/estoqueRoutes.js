@@ -43,4 +43,4 @@ router.get('/', estoqueController.listarPecas);
 // GET /api/pecas/:id
 router.get('/:id', validarID, estoqueController.buscarPecaPorID);
 
-export default router;
+module.exports = router;

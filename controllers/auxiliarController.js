@@ -508,7 +508,7 @@ async function obterEstatisticas(req, res) {
   }
 }
 
-export {
+module.exports = {
   listarMecanicos,
   buscarMecanicoPorID,
   criarMecanico,
