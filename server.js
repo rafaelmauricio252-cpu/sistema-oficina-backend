@@ -111,30 +111,4 @@ app.use('*', (req, res) => {
   res.status(404).json({ erro: 'Rota não encontrada' });
 });
 
-// ============================================
-// INICIALIZAÇÃO DO SERVIDOR
-// ============================================
-
-const server = app.listen(PORT, async () => {
-  console.log('\n==============================================');
-  console.log('🚗  SERVIDOR DA OFICINA INICIADO!');
-  console.log('==============================================');
-  console.log(`📡 Rodando em: http://localhost:${PORT}`);
-  console.log(`🕐 Iniciado em: ${new Date().toLocaleString('pt-BR')}`);
-  console.log(`🔒 Modo: ${process.env.NODE_ENV || 'development'}`);
-  console.log('==============================================\n');
-
-  console.log('📋 Endpoints disponíveis:');
-  console.log('   - GET  http://localhost:' + PORT + '/');
-  console.log('   - GET  http://localhost:' + PORT + '/health');
-  console.log('   - GET  http://localhost:' + PORT + '/api/clientes');
-  console.log('   - GET  http://localhost:' + PORT + '/api/veiculos');
-  console.log('   - GET  http://localhost:' + PORT + '/api/os');
-  console.log('   - GET  http://localhost:' + PORT + '/api/servicos');
-  console.log('   - GET  http://localhost:' + PORT + '/api/pecas');
-  console.log('   - GET  http://localhost:' + PORT + '/api/dashboard');
-  console.log('\n💡 Pressione CTRL+C para parar o servidor');
-  console.log('==============================================\n');
-});
-
-export { app, server };
+export { app };

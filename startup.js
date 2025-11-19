@@ -20,7 +20,10 @@ async function iniciarServidor() {
 
   // Iniciar o servidor após aplicar as migrations
   console.log('🚀 Iniciando servidor...');
-  const { server } = await import('./server.js');
+  const { app } = await import('./server.js');
+
+  const http = await import('http');
+  const server = http.createServer(app);
 
   const PORT = process.env.PORT || 3000;
 
