@@ -508,7 +508,7 @@ async function obterEstatisticas(req, res) {
   }
 }
 
-export {
+export default {
   listarMecanicos,
   buscarMecanicoPorID,
   criarMecanico,

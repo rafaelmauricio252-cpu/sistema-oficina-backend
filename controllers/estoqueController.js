@@ -398,7 +398,7 @@ async function deletarPeca(req, res) {
   }
 }
 
-export {
+export default {
   buscarPecas,
   validarEstoque,
   buscarEstoqueBaixo,

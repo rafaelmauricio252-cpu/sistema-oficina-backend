@@ -323,7 +323,7 @@ async function listarTodosVeiculos(req, res) {
   }
 }
 
-export {
+export default {
   listarVeiculosDoCliente,
   cadastrarVeiculoRapido,
   buscarVeiculoPorID,

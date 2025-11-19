@@ -268,7 +268,7 @@ async function buscarClienteCompleto(req, res) {
   }
 }
 
-export {
+export default {
   buscarClientes,
   cadastrarClienteRapido,
   buscarClientePorID,
