@@ -19,8 +19,8 @@ import {
   Alert,
   CircularProgress,
   Chip,
-  Grid,
 } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Warning as WarningIcon } from '@mui/icons-material';
 import type { Peca, PecaFormData } from '../../types';
 import pecaService from '../../services/pecaService';

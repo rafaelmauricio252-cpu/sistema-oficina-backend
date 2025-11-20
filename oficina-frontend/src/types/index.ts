@@ -143,7 +143,7 @@ export interface DashboardStats {
 // TIPOS DE REQUISIÇÃO/RESPOSTA
 // ============================================
 
-export interface ApiResponse<T> {
+export interface ApiResponse<_T> {
   sucesso: boolean;
   mensagem?: string;
   erro?: string;
