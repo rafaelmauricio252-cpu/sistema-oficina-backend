@@ -200,7 +200,7 @@ export default function Pecas() {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>
-              <Grid component="div" xs={12} sm={6}>
+              <Grid xs={12} sm={6} component="div">
                 <TextField
                   label="Nome"
                   value={formData.nome}
@@ -209,7 +209,7 @@ export default function Pecas() {
                   fullWidth
                 />
               </Grid>
-              <Grid component="div" xs={12} sm={6}>
+              <Grid xs={12} sm={6} component="div">
                 <TextField
                   label="Número da Peça"
                   value={formData.numero_peca}
@@ -228,7 +228,7 @@ export default function Pecas() {
                   fullWidth
                 />
               </Grid>
-              <Grid component="div" xs={12} sm={6}>
+              <Grid xs={12} sm={6} component="div">
                 <TextField
                   label="Preço de Custo"
                   type="number"
@@ -238,7 +238,7 @@ export default function Pecas() {
                   fullWidth
                 />
               </Grid>
-              <Grid component="div" xs={12} sm={6}>
+              <Grid xs={12} sm={6} component="div">
                 <TextField
                   label="Preço de Venda"
                   type="number"
