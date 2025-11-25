@@ -1,14 +1,14 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-exports.shorthands = undefined;
+export const shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.up = (pgm) => {
+export async function up(pgm) {
   // Renomear coluna 'preco' para 'preco_padrao'
   pgm.renameColumn('servicos', 'preco', 'preco_padrao');
 
@@ -30,14 +30,14 @@ exports.up = (pgm) => {
       comment: 'Indica se o serviço está ativo'
     }
   });
-};
+}
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.down = (pgm) => {
+export async function down(pgm) {
   // Remover coluna 'ativo'
   pgm.dropColumn('servicos', 'ativo');
 
@@ -46,4 +46,4 @@ exports.down = (pgm) => {
 
   // Renomear coluna 'preco_padrao' de volta para 'preco'
   pgm.renameColumn('servicos', 'preco_padrao', 'preco');
-};
+}

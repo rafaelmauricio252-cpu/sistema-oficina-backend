@@ -1,14 +1,14 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-exports.shorthands = undefined;
+export const shorthands = undefined;
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.up = (pgm) => {
+export async function up(pgm) {
   // 1. Criar tabela de categorias de peças
   pgm.sql(`
     CREATE TABLE IF NOT EXISTS categorias_pecas (
@@ -73,14 +73,14 @@ exports.up = (pgm) => {
   pgm.createIndex('estoque_movimentacao', 'peca_id');
   pgm.createIndex('estoque_movimentacao', 'os_id');
   pgm.createIndex('estoque_movimentacao', 'data_movimentacao');
-};
+}
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-exports.down = (pgm) => {
+export async function down(pgm) {
   // Remover índices
   pgm.dropIndex('estoque_movimentacao', 'peca_id', { ifExists: true });
   pgm.dropIndex('estoque_movimentacao', 'os_id', { ifExists: true });
@@ -95,4 +95,4 @@ exports.down = (pgm) => {
 
   // Remover tabela de categorias
   pgm.dropTable('categorias_pecas', { ifExists: true, cascade: true });
-};
+}
