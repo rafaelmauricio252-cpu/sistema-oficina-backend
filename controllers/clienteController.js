@@ -120,7 +120,30 @@ async function atualizarCliente(req, res) {
     if (!clienteExistente) {
       return res.status(404).json({ erro: 'Cliente não encontrado' });
     }
-    
+
+    // ===== NOVA VALIDAÇÃO =====
+    // Verificar se cliente tem ordens de serviço
+    const temOS = await db('ordem_servico').where({ cliente_id: id }).first();
+
+    if (temOS) {
+      // Se tem OS, não permite alterar nome e CPF/CNPJ
+      if (nome !== clienteExistente.nome) {
+        return res.status(400).json({
+          erro: 'Não é possível alterar o nome de cliente com ordens de serviço cadastradas',
+          bloqueado: true
+        });
+      }
+
+      const documentoLimpo = removerFormatacao(cpf_cnpj);
+      if (documentoLimpo !== clienteExistente.cpf_cnpj) {
+        return res.status(400).json({
+          erro: 'Não é possível alterar o CPF/CNPJ de cliente com ordens de serviço cadastradas',
+          bloqueado: true
+        });
+      }
+    }
+    // ===== FIM NOVA VALIDAÇÃO =====
+
     const documentoLimpo = removerFormatacao(cpf_cnpj);
     
     // Verificar se CPF/CNPJ já existe em outro cliente
@@ -268,6 +291,27 @@ async function buscarClienteCompleto(req, res) {
   }
 }
 
+/**
+ * Verificar se cliente tem ordens de serviço
+ * GET /api/clientes/:id/tem-os
+ */
+async function verificarClienteTemOS(req, res) {
+  try {
+    const { id } = req.params;
+
+    const temOS = await db('ordem_servico').where({ cliente_id: id }).first();
+
+    res.json({
+      sucesso: true,
+      tem_os: !!temOS
+    });
+
+  } catch (erro) {
+    console.error('Erro ao verificar OS do cliente:', erro);
+    res.status(500).json({ erro: 'Erro ao verificar ordens de serviço' });
+  }
+}
+
 export default {
   buscarClientes,
   cadastrarClienteRapido,
@@ -275,5 +319,6 @@ export default {
   atualizarCliente,
   deletarCliente,
   listarClientes,
-  buscarClienteCompleto // Exportando a função que faltava
+  buscarClienteCompleto,
+  verificarClienteTemOS
 };

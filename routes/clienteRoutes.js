@@ -32,12 +32,16 @@ router.post('/', validarCliente, clienteController.cadastrarClienteRapido);
 // GET /api/clientes?pagina=1&limite=20
 router.get('/', clienteController.listarClientes);
 
+// Buscar cliente + veículos (sem alterar a rota existente /:id)
+router.get('/:id/completo', clienteController.buscarClienteCompleto);
+
+// Verificar se cliente tem ordens de serviço
+// GET /api/clientes/:id/tem-os
+router.get('/:id/tem-os', clienteController.verificarClienteTemOS);
+
 // Buscar cliente por ID
 // GET /api/clientes/:id
 router.get('/:id', validarID, clienteController.buscarClientePorID);
-
-// Buscar cliente + veículos (sem alterar a rota existente /:id)
-router.get('/:id/completo', clienteController.buscarClienteCompleto);
 
 // Atualizar cliente
 // PUT /api/clientes/:id
