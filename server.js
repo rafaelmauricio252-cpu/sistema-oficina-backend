@@ -46,17 +46,15 @@ app.use(helmet({
 
 // Middleware de CORS
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173', // Vite default
-    'http://127.0.0.1:5173'
-  ],
+  origin: process.env.CORS_ORIGIN || 'https://sistema-oficina-frontend-xpgo.onrender.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: false
 };
 app.use(cors(corsOptions));
+
+// Preflight (OPTIONS)
+app.options('*', cors(corsOptions));
 
 // Middleware de parsing
 app.use(express.json({ limit: '10mb' }));
