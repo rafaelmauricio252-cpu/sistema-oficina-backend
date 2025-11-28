@@ -23,6 +23,10 @@ router.post('/', validarVeiculo, veiculoController.cadastrarVeiculoRapido);
 // GET /api/veiculos/:id/historico
 router.get('/:id/historico', validarID, veiculoController.buscarHistoricoVeiculo);
 
+// Verificar se veículo tem OS (para proteção de campos)
+// GET /api/veiculos/:id/tem-os
+router.get('/:id/tem-os', validarID, veiculoController.verificarVeiculoTemOS);
+
 // Listar todos os veículos
 // GET /api/veiculos
 router.get('/', veiculoController.listarTodosVeiculos);
