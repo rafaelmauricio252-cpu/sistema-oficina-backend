@@ -1,0 +1,276 @@
+
+> teste-endpoints-oficina@1.0.0 test
+> node testar-endpoints.js +%Y%m%d-%H%M%S).txt
+
+[36m
+╔═══════════════════════════════════════════════════════════╗[0m
+[36m║                                                           ║[0m
+[36m║         🧪 TESTE COMPLETO DE ENDPOINTS - ÉPICO 3         ║[0m
+[36m║              Sistema de Gestão de Oficina                ║[0m
+[36m║                                                           ║[0m
+[36m╚═══════════════════════════════════════════════════════════╝[0m
+[34m
+⚙️  Configuração:[0m
+[0m   Base URL: http://localhost:3000/api[0m
+[0m   Timeout: 5000ms[0m
+[0m   Total de endpoints: 34[0m
+[33m
+🔍 Verificando servidor...[0m
+[32m✅ Servidor está rodando!
+[0m
+
+============================================================
+[36m  🚀 INICIANDO TESTES DOS ENDPOINTS[0m
+============================================================
+[0m📝 Total de endpoints para testar: 34
+[0m
+
+------------------------------------------------------------
+[34m  👥 TESTANDO ENDPOINTS DE CLIENTES[0m
+------------------------------------------------------------
+[33m
+📍 Testando: 1. Criar cliente rápido[0m
+[0m   Método: POST | URL: http://localhost:3000/api/clientes/rapido[0m
+[31m❌ FALHOU![0m
+[31m   Status: 400[0m
+[31m   Erro: {"erro":"CPF/CNPJ já cadastrado","cliente_existente":{"id":2}}[0m
+[33m
+📍 Testando: 2. Buscar cliente (autocomplete)[0m
+[0m   Método: GET | URL: http://localhost:3000/api/clientes/buscar?q=João[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 2,
+  "clientes": [
+    {
+      "id": 2,
+      "nome": "João Da Silva Teste",
+      "cpf_cnpj": "12345678909",
+      "telefone": "(11) 98765-4321",
+      "email": "joao....[0m
+[33m
+📍 Testando: 3. Listar todos os clientes[0m
+[0m   Método: GET | URL: http://localhost:3000/api/clientes[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 2,
+  "pagina": 1,
+  "total_paginas": 1,
+  "clientes": [
+    {
+      "id": 2,
+      "nome": "João Da Silva Teste",
+      "cpf_cnpj": "12345678909",
+      "tipo_pessoa": ...[0m
+[33m
+📍 Testando: 6. Validar CPF inválido (deve falhar)[0m
+[0m   Método: POST | URL: http://localhost:3000/api/clientes/rapido[0m
+[32m✅ PASSOU! Erro esperado: 400[0m
+
+------------------------------------------------------------
+[34m  🚗 TESTANDO ENDPOINTS DE VEÍCULOS[0m
+------------------------------------------------------------
+[33m
+📍 Testando: 8. Buscar veículo (autocomplete)[0m
+[0m   Método: GET | URL: http://localhost:3000/api/veiculos/buscar?q=ABC[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 1,
+  "veiculos": [
+    {
+      "id": 1,
+      "cliente_id": 1,
+      "placa": "1234",
+      "marca": "FIAT",
+      "modelo": "Uno",
+      "ano": 2020,
+      "cor": "Pre...[0m
+[33m
+📍 Testando: 13. Validar placa inválida (deve falhar)[0m
+[0m   Método: POST | URL: http://localhost:3000/api/veiculos/rapido[0m
+[32m✅ PASSOU! Erro esperado: 400[0m
+
+------------------------------------------------------------
+[34m  📦 TESTANDO ENDPOINTS DE ESTOQUE[0m
+------------------------------------------------------------
+[33m
+📍 Testando: 14. Listar todas as peças[0m
+[0m   Método: GET | URL: http://localhost:3000/api/pecas[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 8,
+  "pagina": 1,
+  "total_paginas": 1,
+  "pecas": [
+    {
+      "id": 8,
+      "categoria_id": 4,
+      "nome": "Amortecedor Dianteiro",
+      "codigo": "AD-001",
+    ...[0m
+[33m
+📍 Testando: 15. Buscar peças (autocomplete)[0m
+[0m   Método: GET | URL: http://localhost:3000/api/pecas/buscar?q=oleo[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 0,
+  "pecas": []
+}[0m
+[33m
+📍 Testando: 18. Listar peças com estoque baixo[0m
+[0m   Método: GET | URL: http://localhost:3000/api/estoque/baixo[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 0,
+  "pecas": []
+}[0m
+
+------------------------------------------------------------
+[34m  🔧 TESTANDO ENDPOINTS AUXILIARES[0m
+------------------------------------------------------------
+[33m
+📍 Testando: 20. Listar mecânicos[0m
+[0m   Método: GET | URL: http://localhost:3000/api/mecanicos[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 3,
+  "mecanicos": [
+    {
+      "id": 3,
+      "nome": "Carlos Souza",
+      "especialidade": "Suspensão e Freios",
+      "telefone": "(82) 99999-0003",
+      "email": ...[0m
+[33m
+📍 Testando: 22. Listar serviços[0m
+[0m   Método: GET | URL: http://localhost:3000/api/servicos[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 8,
+  "servicos": [
+    {
+      "id": 2,
+      "nome": "Alinhamento",
+      "descricao": "Alinhamento e balanceamento",
+      "preco_padrao": "120.00",
+      "tempo_esti...[0m
+[33m
+📍 Testando: 23. Buscar serviços (autocomplete)[0m
+[0m   Método: GET | URL: http://localhost:3000/api/servicos/buscar?q=troca[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 3,
+  "servicos": [
+    {
+      "id": 6,
+      "nome": "Troca de Correia Dentada",
+      "descricao": "Substituição da correia dentada",
+      "preco_padrao": "450.00",
+...[0m
+[33m
+📍 Testando: 25. Listar categorias de serviços[0m
+[0m   Método: GET | URL: http://localhost:3000/api/categorias[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 5,
+  "categorias": [
+    {
+      "id": 5,
+      "nome": "Elétrica",
+      "descricao": "Bateria, velas, cabos"
+    },
+    {
+      "id": 1,
+      "nome": "Filtros",
+    ...[0m
+[33m
+📍 Testando: 26. Buscar estatísticas do dashboard[0m
+[0m   Método: GET | URL: http://localhost:3000/api/dashboard[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "estatisticas": {
+    "os_por_status": [
+      {
+        "status": "Em Andamento",
+        "total": "1",
+        "valor_total": "195.90"
+      },
+      {
+        "status": "Pago...[0m
+
+------------------------------------------------------------
+[34m  📋 TESTANDO ENDPOINTS DE ORDEM DE SERVIÇO[0m
+------------------------------------------------------------
+[33m
+📍 Testando: 28. Listar todas as OS[0m
+[0m   Método: GET | URL: http://localhost:3000/api/os[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 2,
+  "pagina": 1,
+  "total_paginas": 1,
+  "ordem_servicos": [
+    {
+      "id": 1,
+      "numero_os": "OS-2025-00001",
+      "cliente_id": 1,
+      "veiculo_id": 1,
+   ...[0m
+[33m
+📍 Testando: 29. Filtrar OS por status[0m
+[0m   Método: GET | URL: http://localhost:3000/api/os?status=Aguardando[0m
+[32m✅ PASSOU! Status: 200[0m
+[0m   Resposta: {
+  "sucesso": true,
+  "total": 0,
+  "pagina": 1,
+  "total_paginas": 0,
+  "ordem_servicos": []
+}[0m
+
+------------------------------------------------------------
+[34m  📸 TESTANDO ENDPOINTS DE UPLOAD[0m
+------------------------------------------------------------
+[33m
+📍 Testando: 34. Deletar foto[0m
+[0m   ℹ️  Teste de exclusão de foto (requer foto existente)[0m
+[33m   ⚠️  PULADO - Execute manualmente após upload[0m
+
+------------------------------------------------------------
+[34m  🧹 LIMPEZA (OPCIONAL)[0m
+------------------------------------------------------------
+[0m
+⚠️  Deseja deletar os dados de teste criados?[0m
+[33m   Execute manualmente se necessário:[0m
+
+============================================================
+[36m  📊 RELATÓRIO FINAL DOS TESTES[0m
+============================================================
+
+📈 Estatísticas:
+   Total de testes:    17
+[32m   ✅ Testes passaram: 16[0m
+[31m   ❌ Testes falharam: 1[0m
+   📊 Taxa de sucesso: 94.1%
+
+📝 IDs Criados:
+
+🎯 Resumo:
+[33m   ⚠️  1 teste(s) falharam[0m
+[33m   📋 Verifique os logs acima para detalhes[0m
+
+============================================================
+[32m✅ Testes concluídos![0m
+============================================================
+
