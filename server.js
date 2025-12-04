@@ -25,6 +25,8 @@ if (process.env.NODE_ENV === 'production') {
 import db from './config/db.js';
 
 // Importar rotas
+import authRoutes from './routes/authRoutes.js';
+import usuarioRoutes from './routes/usuarioRoutes.js';
 import clienteRoutes from './routes/clienteRoutes.js';
 import veiculoRoutes from './routes/veiculoRoutes.js';
 import osRoutes from './routes/osRoutes.js';
@@ -48,7 +50,7 @@ app.use(helmet({
 // Middleware de CORS
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || ['https://sistema-oficina-frontend-xpgo.onrender.com', 'http://localhost:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false
 };
@@ -67,6 +69,10 @@ app.use('/uploads', express.static('uploads'));
 // ============================================
 // ROTAS DA API
 // ============================================
+
+// Rotas de autenticação (públicas e protegidas)
+app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 
 // Rotas principais
 app.use('/api/clientes', clienteRoutes);
@@ -94,6 +100,8 @@ app.get('/', (req, res) => {
     versao: '2.0.0',
     status: 'online',
     endpoints: {
+      auth: '/api/auth',
+      usuarios: '/api/usuarios',
       clientes: '/api/clientes',
       veiculos: '/api/veiculos',
       servicos: '/api/servicos',

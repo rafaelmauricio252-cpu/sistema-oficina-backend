@@ -6,6 +6,11 @@ import express from 'express';
 const router = express.Router();
 import estoqueController from '../controllers/estoqueController.js';
 import { validarID } from '../middlewares/validarDados.js';
+import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
+
+// Proteger todas as rotas de peças/estoque
+router.use(autenticar);
+router.use(verificarPermissao('pecas'));
 
 // Criar nova peça
 // POST /api/pecas

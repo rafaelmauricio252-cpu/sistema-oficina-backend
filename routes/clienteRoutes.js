@@ -7,6 +7,11 @@ const router = express.Router();
 import clienteController from '../controllers/clienteController.js';
 import veiculoController from '../controllers/veiculoController.js'; // Importar o controller de veículos
 import { validarCliente, validarID } from '../middlewares/validarDados.js';
+import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
+
+// Proteger todas as rotas de clientes
+router.use(autenticar);
+router.use(verificarPermissao('clientes'));
 
 // Buscar clientes (autocomplete)
 // GET /api/clientes/buscar?q=joao

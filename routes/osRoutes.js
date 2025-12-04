@@ -6,6 +6,11 @@ import express from 'express';
 const router = express.Router();
 import osController from '../controllers/osController.js';
 import { validarOS, validarID } from '../middlewares/validarDados.js';
+import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
+
+// Proteger todas as rotas de OS
+router.use(autenticar);
+router.use(verificarPermissao('ordem_servico'));
 
 // Criar nova Ordem de Serviço
 // POST /api/os

@@ -8,6 +8,10 @@ import multer from 'multer';
 import path from 'path';
 import uploadController from '../controllers/uploadController.js';
 import { validarID, validarOSID } from '../middlewares/validarDados.js';
+import { autenticar } from '../middlewares/autenticar.js';
+
+// Proteger todas as rotas de upload (apenas autenticação, sem verificar módulo específico)
+router.use(autenticar);
 
 // Configuração do Multer (upload de arquivos)
 const storage = multer.diskStorage({

@@ -6,6 +6,11 @@ import express from 'express';
 const router = express.Router();
 import veiculoController from '../controllers/veiculoController.js';
 import { validarVeiculo, validarID } from '../middlewares/validarDados.js';
+import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
+
+// Proteger todas as rotas de veículos
+router.use(autenticar);
+router.use(verificarPermissao('veiculos'));
 
 // Buscar veículos (autocomplete por placa)
 // GET /api/veiculos/buscar?q=ABC

@@ -5,6 +5,11 @@
 import express from 'express';
 const router = express.Router();
 import financeiroController from '../controllers/financeiroController.js';
+import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
+
+// Proteger todas as rotas de financeiro
+router.use(autenticar);
+router.use(verificarPermissao('financeiro'));
 
 // Dashboard Financeiro
 // GET /api/financeiro/dashboard
