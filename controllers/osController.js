@@ -166,7 +166,7 @@ async function criarOS(req, res) {
  */
 async function listarOS(req, res) {
   try {
-    const { pagina = 1, limite = 20, status, cliente_id, veiculo_id } = req.query;
+    const { pagina = 1, limite = 20, status, cliente_id, veiculo_id, q } = req.query;
     const offset = (pagina - 1) * limite;
 
     const query = db('ordem_servico as os')
@@ -175,6 +175,19 @@ async function listarOS(req, res) {
       .leftJoin('mecanicos as m', 'os.mecanico_id', 'm.id');
 
     // Aplicar filtros
+    if (q) {
+      const idSearch = parseInt(q.replace(/\D/g, ''), 10);
+
+      query.where(function () {
+        this.where('c.nome', 'ilike', `%${q}%`)
+          .orWhere('v.placa', 'ilike', `%${q}%`);
+
+        if (idSearch) {
+          this.orWhere('os.id', idSearch);
+        }
+      });
+    }
+
     if (status) query.andWhere('os.status', status);
     if (cliente_id) query.andWhere('os.cliente_id', cliente_id);
     if (veiculo_id) query.andWhere('os.veiculo_id', veiculo_id);

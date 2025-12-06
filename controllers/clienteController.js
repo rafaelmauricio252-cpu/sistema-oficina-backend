@@ -19,13 +19,24 @@ async function buscarClientes(req, res) {
 
     const documentoLimpo = removerFormatacao(q);
 
-    const clientes = await db('clientes')
-      .select('id', 'nome', 'cpf_cnpj', 'telefone', 'email', 'endereco')
-      .where('nome', 'ilike', `%${q}%`)
-      .orWhere('cpf_cnpj', 'like', `%${documentoLimpo}%`)
-      .orWhere('telefone', 'like', `%${documentoLimpo}%`)
-      .orderBy('nome')
+    // Busca clientes por nome, CPF, telefone ou PLACA do veículo
+    const queryBuilder = db('clientes')
+      .distinct('clientes.id', 'clientes.nome', 'clientes.cpf_cnpj', 'clientes.telefone', 'clientes.email', 'clientes.endereco')
+      .leftJoin('veiculos', 'clientes.id', 'veiculos.cliente_id')
+      .where(function () {
+        this.where('clientes.nome', 'ilike', `%${q}%`)
+          .orWhere('veiculos.placa', 'ilike', `%${q}%`); // Busca por placa
+
+        // Só busca por CPF/Telefone se houver números na busca
+        if (documentoLimpo.length > 0) {
+          this.orWhere('clientes.cpf_cnpj', 'like', `%${documentoLimpo}%`)
+            .orWhere('clientes.telefone', 'like', `%${documentoLimpo}%`);
+        }
+      })
+      .orderBy('clientes.nome')
       .limit(10);
+
+    const clientes = await queryBuilder;
 
     res.json({
       sucesso: true,
@@ -40,41 +51,67 @@ async function buscarClientes(req, res) {
 }
 
 /**
- * Cadastrar cliente rápido
+ * Cadastrar cliente rápido (com opção de veículo)
  * POST /api/clientes/rapido
  */
 async function cadastrarClienteRapido(req, res) {
   try {
-    const { nome, cpf_cnpj, telefone, email, endereco } = req.body;
+    const { nome, cpf_cnpj, telefone, email, endereco, veiculo } = req.body;
     const documentoLimpo = removerFormatacao(cpf_cnpj);
-    
+
     // Verificar se CPF/CNPJ já existe
     const clienteExistente = await db('clientes').where({ cpf_cnpj: documentoLimpo }).first();
-    
+
     if (clienteExistente) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         erro: 'CPF/CNPJ já cadastrado',
         cliente_existente: clienteExistente
       });
     }
-    
-    // Inserir cliente
-    const novoCliente = {
-      nome: capitalizarNome(nome),
-      cpf_cnpj: documentoLimpo,
-      telefone,
-      email: email || null,
-      endereco: endereco || null
-    };
 
-    const [clienteCadastrado] = await db('clientes').insert(novoCliente).returning('*');
-    
-    res.status(201).json({
-      sucesso: true,
-      mensagem: 'Cliente cadastrado com sucesso',
-      cliente: clienteCadastrado
+    // Se tiver veículo, verificar se placa já existe
+    if (veiculo && veiculo.placa) {
+      const placaExistente = await db('veiculos').where({ placa: veiculo.placa }).first();
+      if (placaExistente) {
+        return res.status(400).json({ erro: 'Placa de veículo já cadastrada' });
+      }
+    }
+
+    // Transação para garantir atomicidade (Cliente + Veículo)
+    await db.transaction(async (trx) => {
+      // 1. Inserir Cliente
+      const novoCliente = {
+        nome: capitalizarNome(nome),
+        cpf_cnpj: documentoLimpo,
+        telefone,
+        email: email || null,
+        endereco: endereco || null
+      };
+
+      const [clienteCadastrado] = await trx('clientes').insert(novoCliente).returning('*');
+
+      // 2. Inserir Veículo (se fornecido)
+      let veiculoCadastrado = null;
+      if (veiculo && veiculo.placa) {
+        const novoVeiculo = {
+          placa: veiculo.placa.toUpperCase(),
+          modelo: veiculo.modelo,
+          marca: veiculo.marca,
+          ano: veiculo.ano ? parseInt(veiculo.ano) : null,
+          cor: veiculo.cor,
+          cliente_id: clienteCadastrado.id
+        };
+        [veiculoCadastrado] = await trx('veiculos').insert(novoVeiculo).returning('*');
+      }
+
+      res.status(201).json({
+        sucesso: true,
+        mensagem: 'Cliente cadastrado com sucesso',
+        cliente: clienteCadastrado,
+        veiculo: veiculoCadastrado
+      });
     });
-    
+
   } catch (erro) {
     console.error('Erro ao cadastrar cliente rápido:', erro);
     res.status(500).json({ erro: 'Erro ao cadastrar cliente' });
@@ -88,18 +125,18 @@ async function cadastrarClienteRapido(req, res) {
 async function buscarClientePorID(req, res) {
   try {
     const { id } = req.params;
-    
+
     const cliente = await db('clientes').where({ id }).first();
-    
+
     if (!cliente) {
       return res.status(404).json({ erro: 'Cliente não encontrado' });
     }
-    
+
     res.json({
       sucesso: true,
       cliente: cliente
     });
-    
+
   } catch (erro) {
     console.error('Erro ao buscar cliente:', erro);
     res.status(500).json({ erro: 'Erro ao buscar cliente' });
@@ -114,7 +151,7 @@ async function atualizarCliente(req, res) {
   try {
     const { id } = req.params;
     const { nome, cpf_cnpj, telefone, email, endereco } = req.body;
-    
+
     // Verificar se cliente existe
     const clienteExistente = await db('clientes').where({ id }).first();
     if (!clienteExistente) {
@@ -145,17 +182,17 @@ async function atualizarCliente(req, res) {
     // ===== FIM NOVA VALIDAÇÃO =====
 
     const documentoLimpo = removerFormatacao(cpf_cnpj);
-    
+
     // Verificar se CPF/CNPJ já existe em outro cliente
     const outroClienteComCpfCnpj = await db('clientes')
       .where('cpf_cnpj', documentoLimpo)
       .andWhereNot('id', id)
       .first();
-      
+
     if (outroClienteComCpfCnpj) {
       return res.status(400).json({ erro: 'CPF/CNPJ já cadastrado para outro cliente' });
     }
-    
+
     // Atualizar cliente
     const dadosAtualizados = {
       nome: capitalizarNome(nome),
@@ -170,13 +207,13 @@ async function atualizarCliente(req, res) {
       .where({ id })
       .update(dadosAtualizados)
       .returning('*');
-    
+
     res.json({
       sucesso: true,
       mensagem: 'Cliente atualizado com sucesso',
       cliente: clienteAtualizado
     });
-    
+
   } catch (erro) {
     console.error('Erro ao atualizar cliente:', erro);
     res.status(500).json({ erro: 'Erro ao atualizar cliente' });
@@ -190,33 +227,33 @@ async function atualizarCliente(req, res) {
 async function deletarCliente(req, res) {
   try {
     const { id } = req.params;
-    
+
     // Verificar se cliente tem veículos ou OS
     const veiculo = await db('veiculos').where({ cliente_id: id }).first();
     const os = await db('ordem_servico').where({ cliente_id: id }).first();
-    
+
     if (veiculo || os) {
-      return res.status(400).json({ 
-        erro: 'Não é possível deletar cliente com veículos ou ordens de serviço cadastradas' 
+      return res.status(400).json({
+        erro: 'Não é possível deletar cliente com veículos ou ordens de serviço cadastradas'
       });
     }
-    
+
     // Deletar cliente
     const [clienteDeletado] = await db('clientes')
       .where({ id })
       .del() // 'delete' é uma palavra reservada, então o Knex usa 'del'
       .returning(['id', 'nome']);
-    
+
     if (!clienteDeletado) {
       return res.status(404).json({ erro: 'Cliente não encontrado' });
     }
-    
+
     res.json({
       sucesso: true,
       mensagem: 'Cliente deletado com sucesso',
       cliente_deletado: clienteDeletado
     });
-    
+
   } catch (erro) {
     console.error('Erro ao deletar cliente:', erro);
     res.status(500).json({ erro: 'Erro ao deletar cliente' });
@@ -232,17 +269,17 @@ async function listarClientes(req, res) {
     const pagina = parseInt(req.query.pagina) || 1;
     const limite = parseInt(req.query.limite) || 20;
     const offset = (pagina - 1) * limite;
-    
+
     // Contar total de clientes
     const [{ count: total }] = await db('clientes').count('* as count');
-    
+
     // Buscar clientes com paginação
     const clientes = await db('clientes')
       .select('*')
       .orderBy('clientes.id', 'desc')
       .limit(limite)
       .offset(offset);
-    
+
     res.json({
       sucesso: true,
       total: parseInt(total),
@@ -250,7 +287,7 @@ async function listarClientes(req, res) {
       total_paginas: Math.ceil(total / limite),
       clientes: clientes
     });
-    
+
   } catch (erro) {
     console.error('Erro ao listar clientes:', erro);
     res.status(500).json({ erro: 'Erro ao listar clientes' });

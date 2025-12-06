@@ -313,9 +313,11 @@ async function buscarVeiculos(req, res) {
     const veiculos = await db('veiculos as v')
       .leftJoin('clientes as c', 'v.cliente_id', 'c.id')
       .select('v.*', 'c.nome as nome_cliente')
-      .where('v.placa', 'like', `%${placaLimpa}%`)
+      .where('v.placa', 'ilike', `%${placaLimpa}%`)
       .orWhere('v.modelo', 'ilike', `%${q}%`)
       .orWhere('v.marca', 'ilike', `%${q}%`)
+      .orWhere('v.cor', 'ilike', `%${q}%`) // Busca por cor
+      .orWhere('c.nome', 'ilike', `%${q}%`) // Busca por nome do cliente
       .orderBy('v.placa')
       .limit(10);
 

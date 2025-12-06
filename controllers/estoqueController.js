@@ -49,7 +49,9 @@ async function criarPeca(req, res) {
       preco_custo,
       preco_venda,
       quantidade_estoque,
+      quantidade_estoque,
       estoque_minimo,
+      localizacao_estoque: req.body.localizacao || null,
       criado_em: db.fn.now(),
       atualizado_em: db.fn.now()
     }).returning('*');
@@ -57,7 +59,7 @@ async function criarPeca(req, res) {
     res.status(201).json({
       sucesso: true,
       mensagem: 'Peça criada com sucesso',
-      peca: novaPeca
+      peca: { ...novaPeca, localizacao: novaPeca.localizacao_estoque }
     });
 
   } catch (erro) {
@@ -111,6 +113,9 @@ async function atualizarPeca(req, res) {
       if (isNaN(estoque_minimo) || estoque_minimo < 0) return res.status(400).json({ erro: 'Estoque mínimo deve ser um número não negativo' });
       dadosParaAtualizar.estoque_minimo = estoque_minimo;
     }
+    if (req.body.localizacao !== undefined) {
+      dadosParaAtualizar.localizacao_estoque = req.body.localizacao;
+    }
 
     // Validação de duplicidade para nome e numero_peca (excluindo a própria peça)
     if (nome) {
@@ -136,7 +141,7 @@ async function atualizarPeca(req, res) {
     res.json({
       sucesso: true,
       mensagem: 'Peça atualizada com sucesso',
-      peca: pecaAtualizada
+      peca: { ...pecaAtualizada, localizacao: pecaAtualizada.localizacao_estoque }
     });
 
   } catch (erro) {
@@ -152,34 +157,34 @@ async function atualizarPeca(req, res) {
 async function buscarPecas(req, res) {
   try {
     const { q } = req.query;
-    
+
     if (!q || q.trim() === '') {
       return res.status(400).json({ erro: 'Parâmetro de busca é obrigatório' });
     }
-    
+
     const pecas = await db('pecas as p')
       .leftJoin('categorias_pecas as c', 'p.categoria_id', 'c.id')
       .select(
         'p.id', 'p.nome', 'p.numero_peca as codigo', 'p.preco_venda',
-        'p.quantidade_estoque', 'p.estoque_minimo', 'c.nome as categoria'
+        'p.quantidade_estoque', 'p.estoque_minimo', 'p.localizacao_estoque', 'c.nome as categoria'
       )
       .where('p.nome', 'ilike', `%${q}%`)
       .orWhere('p.numero_peca', 'ilike', `%${q}%`)
       .orderBy('p.nome')
       .limit(15);
-    
+
     const pecasComStatus = pecas.map(peca => ({
       ...peca,
       estoque_baixo: peca.quantidade_estoque <= peca.estoque_minimo,
       estoque_disponivel: peca.quantidade_estoque > 0
     }));
-    
+
     res.json({
       sucesso: true,
       total: pecasComStatus.length,
       pecas: pecasComStatus
     });
-    
+
   } catch (erro) {
     console.error('Erro ao buscar peças:', erro);
     res.status(500).json({ erro: 'Erro ao buscar peças' });
@@ -193,22 +198,22 @@ async function buscarPecas(req, res) {
 async function validarEstoque(req, res) {
   try {
     const { peca_id, quantidade } = req.query;
-    
+
     if (!peca_id) return res.status(400).json({ erro: 'ID da peça é obrigatório' });
     if (!quantidade || quantidade <= 0) return res.status(400).json({ erro: 'Quantidade deve ser maior que 0' });
-    
+
     const peca = await db('pecas')
       .select('id', 'nome', 'quantidade_estoque', 'estoque_minimo', 'preco_venda')
       .where({ id: peca_id })
       .first();
-    
+
     if (!peca) {
       return res.status(404).json({ disponivel: false, erro: 'Peça não encontrada' });
     }
-    
+
     const quantidadeSolicitada = parseInt(quantidade);
     const estoqueDisponivel = peca.quantidade_estoque >= quantidadeSolicitada;
-    
+
     res.json({
       sucesso: true,
       disponivel: estoqueDisponivel,
@@ -220,11 +225,11 @@ async function validarEstoque(req, res) {
         estoque_baixo: peca.quantidade_estoque <= peca.estoque_minimo,
         preco_unitario: peca.preco_venda
       },
-      mensagem: estoqueDisponivel 
-        ? 'Estoque disponível' 
+      mensagem: estoqueDisponivel
+        ? 'Estoque disponível'
         : `Estoque insuficiente. Disponível: ${peca.quantidade_estoque}, Solicitado: ${quantidadeSolicitada}`
     });
-    
+
   } catch (erro) {
     console.error('Erro ao validar estoque:', erro);
     res.status(500).json({ erro: 'Erro ao validar estoque' });
@@ -241,24 +246,25 @@ async function buscarEstoqueBaixo(req, res) {
       .leftJoin('categorias_pecas as c', 'p.categoria_id', 'c.id')
       .select(
         'p.id', 'p.nome', 'p.numero_peca as codigo', 'p.quantidade_estoque',
-        'p.estoque_minimo', 'p.preco_venda', 'c.nome as categoria'
+        'p.estoque_minimo', 'p.preco_venda', 'p.localizacao_estoque', 'c.nome as categoria'
       )
       .whereRaw('p.quantidade_estoque <= p.estoque_minimo')
       .orderBy('p.quantidade_estoque', 'asc')
       .orderBy('p.nome', 'asc');
-    
+
     const pecasClassificadas = pecas.map(peca => ({
       ...peca,
       critico: peca.quantidade_estoque === 0,
-      diferenca: peca.estoque_minimo - peca.quantidade_estoque
+      diferenca: peca.estoque_minimo - peca.quantidade_estoque,
+      localizacao: peca.localizacao_estoque
     }));
-    
+
     res.json({
       sucesso: true,
       total: pecasClassificadas.length,
       pecas: pecasClassificadas
     });
-    
+
   } catch (erro) {
     console.error('Erro ao buscar estoque baixo:', erro);
     res.status(500).json({ erro: 'Erro ao buscar estoque baixo' });
@@ -272,26 +278,27 @@ async function buscarEstoqueBaixo(req, res) {
 async function buscarPecaPorID(req, res) {
   try {
     const { id } = req.params;
-    
+
     const peca = await db('pecas as p')
       .leftJoin('categorias_pecas as c', 'p.categoria_id', 'c.id')
       .select('p.*', 'c.nome as categoria')
       .where('p.id', id)
       .first();
-    
+
     if (!peca) {
       return res.status(404).json({ erro: 'Peça não encontrada' });
     }
-    
+
     res.json({
       sucesso: true,
       peca: {
         ...peca,
         estoque_baixo: peca.quantidade_estoque <= peca.estoque_minimo,
-        estoque_disponivel: peca.quantidade_estoque > 0
+        estoque_disponivel: peca.quantidade_estoque > 0,
+        localizacao: peca.localizacao_estoque
       }
     });
-    
+
   } catch (erro) {
     console.error('Erro ao buscar peça:', erro);
     res.status(500).json({ erro: 'Erro ao buscar peça' });
@@ -316,13 +323,14 @@ async function listarPecas(req, res) {
       .orderBy('p.id', 'desc')
       .limit(limite)
       .offset(offset);
-    
+
     const pecasComStatus = pecas.map(peca => ({
       ...peca,
       estoque_baixo: peca.quantidade_estoque <= peca.estoque_minimo,
-      estoque_disponivel: peca.quantidade_estoque > 0
+      estoque_disponivel: peca.quantidade_estoque > 0,
+      localizacao: peca.localizacao_estoque
     }));
-    
+
     res.json({
       sucesso: true,
       total,
@@ -330,7 +338,7 @@ async function listarPecas(req, res) {
       total_paginas: Math.ceil(total / limite),
       pecas: pecasComStatus
     });
-    
+
   } catch (erro) {
     console.error('Erro ao listar peças:', erro);
     res.status(500).json({ erro: 'Erro ao listar peças' });
@@ -344,7 +352,7 @@ async function listarPecas(req, res) {
 async function buscarHistoricoMovimentacao(req, res) {
   try {
     const { peca_id } = req.params;
-    
+
     const historico = await db('estoque_movimentacao as m')
       .leftJoin('pecas as p', 'm.peca_id', 'p.id')
       .leftJoin('ordem_servico as os', 'm.os_id', 'os.id')
@@ -352,13 +360,13 @@ async function buscarHistoricoMovimentacao(req, res) {
       .where('m.peca_id', peca_id)
       .orderBy('m.data_movimentacao', 'desc')
       .limit(50);
-    
+
     res.json({
       sucesso: true,
       total: historico.length,
       historico: historico
     });
-    
+
   } catch (erro) {
     console.error('Erro ao buscar histórico:', erro);
     res.status(500).json({ erro: 'Erro ao buscar histórico de movimentação' });

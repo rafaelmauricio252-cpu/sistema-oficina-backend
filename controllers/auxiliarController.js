@@ -541,7 +541,33 @@ async function obterEstatisticas(req, res) {
         .where({ status: 'Pago' })
         .count('* as total')
         .first()
-        .then(row => parseInt(row.total))
+        .then(row => parseInt(row.total)),
+
+      // Top 5 Serviços Mais Pedidos
+      db('os_servicos')
+        .join('servicos', 'os_servicos.servico_id', 'servicos.id')
+        .select('servicos.nome')
+        .count('os_servicos.id as total')
+        .groupBy('servicos.id', 'servicos.nome')
+        .orderBy('total', 'desc')
+        .limit(5)
+        .then(rows => rows.map(row => ({
+          nome: row.nome,
+          total: parseInt(row.total)
+        }))),
+
+      // Top 5 Peças Mais Utilizadas
+      db('os_pecas')
+        .join('pecas', 'os_pecas.peca_id', 'pecas.id')
+        .select('pecas.nome')
+        .sum('os_pecas.quantidade as total')
+        .groupBy('pecas.id', 'pecas.nome')
+        .orderBy('total', 'desc')
+        .limit(5)
+        .then(rows => rows.map(row => ({
+          nome: row.nome,
+          total: parseInt(row.total)
+        })))
     ]);
 
     res.json({
@@ -557,7 +583,9 @@ async function obterEstatisticas(req, res) {
         os_agendadas: osAgendadas,
         os_em_andamento: osEmAndamento,
         os_finalizadas: osFinalizadas,
-        os_pagas: osPagas
+        os_pagas: osPagas,
+        top_servicos: arguments[0][11], // O 12º elemento do Promise.all (índice 11)
+        top_pecas: arguments[0][12]     // O 13º elemento do Promise.all (índice 12)
       }
     });
 
@@ -567,12 +595,47 @@ async function obterEstatisticas(req, res) {
   }
 }
 
+/**
+ * Buscar mecânicos (autocomplete)
+ * GET /api/mecanicos/buscar?q=joao
+ */
+async function buscarMecanicos(req, res) {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.trim() === '') {
+      return res.status(400).json({ erro: 'Parâmetro de busca é obrigatório' });
+    }
+
+    const mecanicos = await db('mecanicos')
+      .select('id', 'nome', 'cpf', 'especialidade', 'telefone', 'email')
+      .andWhere(function () {
+        this.where('nome', 'ilike', `%${q}%`)
+          .orWhere('cpf', 'ilike', `%${q}%`)
+          .orWhere('especialidade', 'ilike', `%${q}%`);
+      })
+      .orderBy('nome')
+      .limit(15);
+
+    res.json({
+      sucesso: true,
+      total: mecanicos.length,
+      mecanicos
+    });
+
+  } catch (erro) {
+    console.error('Erro ao buscar mecânicos:', erro);
+    res.status(500).json({ erro: 'Erro ao buscar mecânicos' });
+  }
+}
+
 export default {
   listarMecanicos,
   buscarMecanicoPorID,
   criarMecanico,
   atualizarMecanico,
   deletarMecanico,
+  buscarMecanicos,
   buscarServicos,
   listarServicos,
   buscarServicoPorID,

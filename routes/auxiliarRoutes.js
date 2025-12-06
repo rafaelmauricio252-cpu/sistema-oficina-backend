@@ -12,6 +12,10 @@ import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
 // ROTAS DE MECÂNICOS
 // ============================================
 
+// Buscar mecânicos (autocomplete)
+// GET /api/mecanicos/buscar?q=joao
+router.get('/mecanicos/buscar', autenticar, verificarPermissao('mecanicos'), auxiliarController.buscarMecanicos);
+
 // Listar todos os mecânicos
 // GET /api/mecanicos
 router.get('/mecanicos', autenticar, verificarPermissao('mecanicos'), auxiliarController.listarMecanicos);
