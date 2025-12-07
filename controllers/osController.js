@@ -196,7 +196,7 @@ async function listarOS(req, res) {
     const countQuery = query.clone().clearSelect().clearOrder().count('* as total').first();
     const dataQuery = query.select(
       'os.*',
-      'c.nome as cliente_nome',
+      'c.nome as cliente_nome', 'c.telefone as cliente_telefone',
       'v.placa', 'v.marca', 'v.modelo',
       'm.nome as mecanico_nome'
     )
