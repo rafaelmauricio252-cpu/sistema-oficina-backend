@@ -6,6 +6,9 @@ import db from '../config/db.js';
 import path from 'path';
 import fs from 'fs/promises';
 
+// URL base do servidor (dinâmica para funcionar em produção e local)
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
 /**
  * Upload de foto da OS
  * POST /api/upload/foto
@@ -43,7 +46,7 @@ async function uploadFoto(req, res) {
       mensagem: 'Foto enviada com sucesso',
       foto: {
         ...fotoInserida,
-        url: `http://localhost:3000${caminhoRelativo}`,
+        url: `${BASE_URL}${caminhoRelativo}`,
         nome_arquivo: req.file.filename,
         tamanho: req.file.size,
         tipo: req.file.mimetype
@@ -75,7 +78,7 @@ async function listarFotosOS(req, res) {
     
     const fotosComURL = fotos.map(foto => ({
       ...foto,
-      url: `http://localhost:3000${foto.caminho_arquivo}`
+      url: `${BASE_URL}${foto.caminho_arquivo}`
     }));
     
     res.json({

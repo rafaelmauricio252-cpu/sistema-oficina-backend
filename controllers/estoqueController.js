@@ -125,14 +125,6 @@ async function atualizarPeca(req, res) {
       if (isNaN(preco_venda) || preco_venda < 0) return res.status(400).json({ erro: 'Preço de venda deve ser um número não negativo' });
       dadosParaAtualizar.preco_venda = preco_venda;
     }
-    // BLOQUEIO: quantidade_estoque NÃO pode ser alterada via edição
-    // Movimentações de estoque devem ser feitas APENAS via botões "Dar Entrada" e "Dar Saída"
-    // Isso garante rastreabilidade total no histórico de movimentações
-    if (quantidade_estoque !== undefined) {
-      return res.status(400).json({
-        erro: 'Não é permitido alterar a quantidade de estoque diretamente. Use os botões "Dar Entrada" ou "Dar Saída" para movimentar o estoque.'
-      });
-    }
     if (estoque_minimo !== undefined) {
       if (isNaN(estoque_minimo) || estoque_minimo < 0) return res.status(400).json({ erro: 'Estoque mínimo deve ser um número não negativo' });
       dadosParaAtualizar.estoque_minimo = estoque_minimo;

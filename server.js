@@ -24,6 +24,21 @@ if (process.env.NODE_ENV === 'production') {
 // Importar configurações
 import db from './config/db.js';
 
+// Importar módulos para criar pasta de uploads
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Criar pasta de uploads se não existir (necessário para Render)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, 'uploads', 'fotos');
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Pasta uploads/fotos criada com sucesso');
+}
+
 // Importar rotas
 import authRoutes from './routes/authRoutes.js';
 import usuarioRoutes from './routes/usuarioRoutes.js';
