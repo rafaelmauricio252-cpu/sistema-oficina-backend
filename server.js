@@ -49,6 +49,7 @@ import uploadRoutes from './routes/uploadRoutes.js';
 import auxiliarRoutes from './routes/auxiliarRoutes.js';
 import estoqueRoutes from './routes/estoqueRoutes.js';
 import financeiroRoutes from './routes/financeiroRoutes.js';
+import relatorioRoutes from './routes/relatorioRoutes.js';
 
 // ============================================
 // CONFIGURAÇÃO DO SERVIDOR
@@ -97,6 +98,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api', auxiliarRoutes);
 app.use('/api/pecas', estoqueRoutes);  // Adicionado rota para peças/estoque
 app.use('/api/financeiro', financeiroRoutes);  // Adicionado rota para financeiro
+app.use('/api/relatorios', relatorioRoutes);  // Adicionado rota para relatórios
 
 // Rota de saúde (para verificar se o serviço está rodando)
 app.get('/health', (req, res) => {
@@ -125,6 +127,7 @@ app.get('/', (req, res) => {
       mecanicos: '/api/mecanicos',
       dashboard: '/api/dashboard',
       financeiro: '/api/financeiro',
+      relatorios: '/api/relatorios',
       health: '/health'
     }
   });
