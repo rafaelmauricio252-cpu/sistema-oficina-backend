@@ -64,7 +64,17 @@ async function gerarRelatorioOS(req, res) {
       'valor_total': 'os.valor_total',
       'desconto': 'os.desconto',
       'valor_final': 'os.valor_total as valor_final',
-      'forma_pagamento': 'os.forma_pagamento'
+      'forma_pagamento': 'os.forma_pagamento',
+      'valor_servicos': db.raw(`(
+        SELECT COALESCE(SUM(preco_servico), 0)
+        FROM os_servicos
+        WHERE os_servicos.os_id = os.id
+      ) as valor_servicos`),
+      'valor_pecas': db.raw(`(
+        SELECT COALESCE(SUM(quantidade * preco_unitario), 0)
+        FROM os_pecas
+        WHERE os_pecas.os_id = os.id
+      ) as valor_pecas`)
     };
 
     camposFinais.forEach(campo => {
@@ -113,10 +123,20 @@ async function gerarRelatorioOS(req, res) {
       .leftJoin('clientes as c', 'os.cliente_id', 'c.id')
       .leftJoin('veiculos as v', 'os.veiculo_id', 'v.id')
       .select(
-        db.raw('COUNT(*) as total_os'),
+        db.raw('COUNT(*) as total_registros'),
         db.raw('COALESCE(SUM(os.valor_total), 0) as valor_total'),
         db.raw('COALESCE(SUM(os.desconto), 0) as total_descontos'),
-        db.raw('COALESCE(SUM(os.valor_total), 0) as valor_final')
+        db.raw('COALESCE(SUM(os.valor_total), 0) as total_valor_final'),
+        db.raw(`COALESCE(SUM((
+          SELECT COALESCE(SUM(preco_servico), 0)
+          FROM os_servicos
+          WHERE os_servicos.os_id = os.id
+        )), 0) as total_valor_servicos`),
+        db.raw(`COALESCE(SUM((
+          SELECT COALESCE(SUM(quantidade * preco_unitario), 0)
+          FROM os_pecas
+          WHERE os_pecas.os_id = os.id
+        )), 0) as total_valor_pecas`)
       );
 
     // Aplicar os mesmos filtros aos totalizadores
@@ -148,10 +168,10 @@ async function gerarRelatorioOS(req, res) {
     const totalizadoresResult = await totalizadoresQuery.first();
 
     const totalizadores = {
-      total_os: parseInt(totalizadoresResult.total_os),
-      valor_total: parseFloat(totalizadoresResult.valor_total),
-      total_descontos: parseFloat(totalizadoresResult.total_descontos),
-      valor_final: parseFloat(totalizadoresResult.valor_final)
+      total_registros: parseInt(totalizadoresResult?.total_registros) || 0,
+      total_valor_servicos: parseFloat(totalizadoresResult?.total_valor_servicos) || 0,
+      total_valor_pecas: parseFloat(totalizadoresResult?.total_valor_pecas) || 0,
+      total_valor_final: parseFloat(totalizadoresResult?.total_valor_final) || 0
     };
 
     res.json({
@@ -369,20 +389,16 @@ async function gerarRelatorioFinanceiro(req, res) {
       totalPecasQuery.first()
     ]);
 
-    const totalOs = parseInt(totalizadoresResult.total_os);
-    const receitaLiquida = parseFloat(totalizadoresResult.valor_final);
-    const totalServicos = parseFloat(totalServicosResult?.total || 0);
-    const totalPecas = parseFloat(totalPecasResult?.total || 0);
+    const totalRegistros = parseInt(totalizadoresResult?.total_os) || 0;
+    const receitaLiquida = parseFloat(totalizadoresResult?.valor_final) || 0;
+    const totalServicos = parseFloat(totalServicosResult?.total) || 0;
+    const totalPecas = parseFloat(totalPecasResult?.total) || 0;
 
     const totalizadores = {
-      total_os: totalOs,
-      valor_total: parseFloat(totalizadoresResult.valor_total),
-      total_descontos: parseFloat(totalizadoresResult.total_descontos),
-      valor_final: receitaLiquida,
-      total_servicos: totalServicos,
-      total_pecas: totalPecas,
-      receita_liquida: receitaLiquida,
-      ticket_medio: totalOs > 0 ? receitaLiquida / totalOs : 0
+      total_registros: totalRegistros,
+      total_valor_servicos: totalServicos,
+      total_valor_pecas: totalPecas,
+      total_valor_final: receitaLiquida
     };
 
     res.json({
@@ -524,16 +540,13 @@ async function gerarRelatorioEstoque(req, res) {
 
     const totalizadoresResult = await totalizadoresQuery.first();
 
-    const valorTotalCusto = parseFloat(totalizadoresResult.valor_total_custo);
-    const valorTotalVenda = parseFloat(totalizadoresResult.valor_total_venda);
+    const valorTotalCusto = parseFloat(totalizadoresResult?.valor_total_custo) || 0;
+    const valorTotalVenda = parseFloat(totalizadoresResult?.valor_total_venda) || 0;
 
     const totalizadores = {
-      total_pecas: parseInt(totalizadoresResult.total_pecas),
-      quantidade_total: parseInt(totalizadoresResult.quantidade_total),
+      total_itens: parseInt(totalizadoresResult?.total_pecas) || 0,
       valor_total_custo: valorTotalCusto,
-      valor_total_venda: valorTotalVenda,
-      lucro_potencial: valorTotalVenda - valorTotalCusto,
-      pecas_estoque_baixo: parseInt(totalizadoresResult.pecas_estoque_baixo)
+      valor_total_venda: valorTotalVenda
     };
 
     res.json({
