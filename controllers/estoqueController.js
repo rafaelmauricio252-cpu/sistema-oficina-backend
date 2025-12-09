@@ -41,20 +41,40 @@ async function criarPeca(req, res) {
       }
     }
 
-    const [novaPeca] = await db('pecas').insert({
-      nome,
-      numero_peca,
-      descricao: descricao || null,
-      categoria_id: categoria_id || null,
-      preco_custo,
-      preco_venda,
-      quantidade_estoque,
-      quantidade_estoque,
-      estoque_minimo,
-      localizacao_estoque: req.body.localizacao || null,
-      criado_em: db.fn.now(),
-      atualizado_em: db.fn.now()
-    }).returning('*');
+    // Usar transaction para garantir atomicidade
+    const novaPeca = await db.transaction(async (trx) => {
+      // Inserir a peça
+      const [peca] = await trx('pecas').insert({
+        nome,
+        numero_peca,
+        descricao: descricao || null,
+        categoria_id: categoria_id || null,
+        preco_custo,
+        preco_venda,
+        quantidade_estoque,
+        estoque_minimo,
+        localizacao_estoque: req.body.localizacao || null,
+        criado_em: db.fn.now(),
+        atualizado_em: db.fn.now()
+      }).returning('*');
+
+      // Registrar movimentação inicial se houver estoque
+      if (quantidade_estoque > 0) {
+        await trx('estoque_movimentacao').insert({
+          peca_id: peca.id,
+          os_id: null,
+          usuario_id: req.usuario.id,
+          tipo_movimentacao: 'ENTRADA',
+          quantidade: quantidade_estoque,
+          quantidade_anterior: 0,
+          quantidade_nova: quantidade_estoque,
+          motivo: 'Estoque inicial - Cadastro da peça',
+          data_movimentacao: new Date()
+        });
+      }
+
+      return peca;
+    });
 
     res.status(201).json({
       sucesso: true,
@@ -105,9 +125,13 @@ async function atualizarPeca(req, res) {
       if (isNaN(preco_venda) || preco_venda < 0) return res.status(400).json({ erro: 'Preço de venda deve ser um número não negativo' });
       dadosParaAtualizar.preco_venda = preco_venda;
     }
+    // BLOQUEIO: quantidade_estoque NÃO pode ser alterada via edição
+    // Movimentações de estoque devem ser feitas APENAS via botões "Dar Entrada" e "Dar Saída"
+    // Isso garante rastreabilidade total no histórico de movimentações
     if (quantidade_estoque !== undefined) {
-      if (isNaN(quantidade_estoque) || quantidade_estoque < 0) return res.status(400).json({ erro: 'Quantidade em estoque deve ser um número não negativo' });
-      dadosParaAtualizar.quantidade_estoque = quantidade_estoque;
+      return res.status(400).json({
+        erro: 'Não é permitido alterar a quantidade de estoque diretamente. Use os botões "Dar Entrada" ou "Dar Saída" para movimentar o estoque.'
+      });
     }
     if (estoque_minimo !== undefined) {
       if (isNaN(estoque_minimo) || estoque_minimo < 0) return res.status(400).json({ erro: 'Estoque mínimo deve ser um número não negativo' });
@@ -346,30 +370,41 @@ async function listarPecas(req, res) {
 }
 
 /**
- * Buscar histórico de movimentação de uma peça
+ * Busca histórico de movimentações de uma peça
  * GET /api/estoque/:peca_id/historico
  */
 async function buscarHistoricoMovimentacao(req, res) {
-  try {
-    const { peca_id } = req.params;
+  const { peca_id } = req.params;
 
-    const historico = await db('estoque_movimentacao as m')
-      .leftJoin('pecas as p', 'm.peca_id', 'p.id')
-      .leftJoin('ordem_servico as os', 'm.os_id', 'os.id')
-      .select('m.*', 'p.nome as nome_peca', 'os.id as numero_os')
-      .where('m.peca_id', peca_id)
-      .orderBy('m.data_movimentacao', 'desc')
-      .limit(50);
+  try {
+    // Buscar informações da peça
+    const peca = await db('pecas')
+      .where({ id: peca_id })
+      .first('nome', 'numero_peca', 'quantidade_estoque', 'estoque_minimo');
+
+    if (!peca) {
+      return res.status(404).json({ erro: 'Peça não encontrada' });
+    }
+
+    // Buscar movimentações com join de usuário
+    const movimentacoes = await db('estoque_movimentacao')
+      .select(
+        'estoque_movimentacao.*',
+        'usuarios.nome as usuario_nome'
+      )
+      .leftJoin('usuarios', 'estoque_movimentacao.usuario_id', 'usuarios.id')
+      .where({ 'estoque_movimentacao.peca_id': peca_id })
+      .orderBy('estoque_movimentacao.data_movimentacao', 'desc');
 
     res.json({
       sucesso: true,
-      total: historico.length,
-      historico: historico
+      peca,
+      movimentacoes
     });
 
   } catch (erro) {
     console.error('Erro ao buscar histórico:', erro);
-    res.status(500).json({ erro: 'Erro ao buscar histórico de movimentação' });
+    res.status(500).json({ erro: erro.message });
   }
 }
 
@@ -403,6 +438,185 @@ async function deletarPeca(req, res) {
   } catch (erro) {
     console.error('Erro ao deletar peça:', erro);
     res.status(500).json({ erro: 'Erro ao deletar peça' });
+  }
+}
+
+/**
+ * Registra entrada manual de estoque
+ * POST /api/estoque/entrada
+ */
+export async function darEntrada(req, res) {
+  const { peca_id, quantidade, motivo } = req.body;
+
+  // Validações
+  if (!peca_id || !quantidade || !motivo) {
+    return res.status(400).json({
+      erro: 'Campos obrigatórios: peca_id, quantidade, motivo'
+    });
+  }
+
+  const qtd = parseInt(quantidade);
+  if (isNaN(qtd) || qtd <= 0) {
+    return res.status(400).json({
+      erro: 'Quantidade deve ser um número maior que zero'
+    });
+  }
+
+  const motivoTrimmed = motivo.trim();
+  if (motivoTrimmed.length < 10) {
+    return res.status(400).json({
+      erro: 'Motivo deve ter no mínimo 10 caracteres'
+    });
+  }
+
+  try {
+    const resultado = await db.transaction(async (trx) => {
+      // Buscar peça atual
+      const peca = await trx('pecas').where({ id: peca_id }).first();
+
+      if (!peca) {
+        throw new Error('Peça não encontrada');
+      }
+
+      const quantidadeAnterior = peca.quantidade_estoque;
+      const quantidadeNova = quantidadeAnterior + qtd;
+
+      // Atualizar estoque
+      await trx('pecas')
+        .where({ id: peca_id })
+        .update({
+          quantidade_estoque: quantidadeNova,
+          atualizado_em: new Date()
+        });
+
+      // Registrar movimentação
+      await trx('estoque_movimentacao').insert({
+        peca_id,
+        os_id: null,
+        usuario_id: req.usuario.id,
+        tipo_movimentacao: 'ENTRADA',
+        quantidade: qtd,
+        quantidade_anterior: quantidadeAnterior,
+        quantidade_nova: quantidadeNova,
+        motivo: motivoTrimmed,
+        data_movimentacao: new Date()
+      });
+
+      return {
+        peca_nome: peca.nome,
+        quantidade_nova: quantidadeNova
+      };
+    });
+
+    res.json({
+      sucesso: true,
+      mensagem: `Entrada registrada com sucesso! Estoque atualizado para ${resultado.quantidade_nova} unidades`,
+      dados: resultado
+    });
+
+  } catch (erro) {
+    console.error('Erro ao dar entrada:', erro);
+    res.status(500).json({
+      erro: erro.message || 'Erro ao registrar entrada de estoque'
+    });
+  }
+}
+
+/**
+ * Registra saída manual de estoque
+ * POST /api/estoque/saida
+ */
+export async function darSaida(req, res) {
+  const { peca_id, quantidade, motivo } = req.body;
+
+  // Validações
+  if (!peca_id || !quantidade || !motivo) {
+    return res.status(400).json({
+      erro: 'Campos obrigatórios: peca_id, quantidade, motivo'
+    });
+  }
+
+  const qtd = parseInt(quantidade);
+  if (isNaN(qtd) || qtd <= 0) {
+    return res.status(400).json({
+      erro: 'Quantidade deve ser um número maior que zero'
+    });
+  }
+
+  const motivoTrimmed = motivo.trim();
+  if (motivoTrimmed.length < 10) {
+    return res.status(400).json({
+      erro: 'Motivo deve ter no mínimo 10 caracteres'
+    });
+  }
+
+  try {
+    const resultado = await db.transaction(async (trx) => {
+      // Buscar peça atual
+      const peca = await trx('pecas').where({ id: peca_id }).first();
+
+      if (!peca) {
+        throw new Error('Peça não encontrada');
+      }
+
+      // VALIDAÇÃO CRÍTICA: Estoque suficiente?
+      if (peca.quantidade_estoque < qtd) {
+        throw new Error(
+          `Estoque insuficiente! Disponível: ${peca.quantidade_estoque}, Solicitado: ${qtd}`
+        );
+      }
+
+      const quantidadeAnterior = peca.quantidade_estoque;
+      const quantidadeNova = quantidadeAnterior - qtd;
+
+      // Atualizar estoque
+      await trx('pecas')
+        .where({ id: peca_id })
+        .update({
+          quantidade_estoque: quantidadeNova,
+          atualizado_em: new Date()
+        });
+
+      // Registrar movimentação
+      await trx('estoque_movimentacao').insert({
+        peca_id,
+        os_id: null,
+        usuario_id: req.usuario.id,
+        tipo_movimentacao: 'SAIDA',
+        quantidade: -qtd,
+        quantidade_anterior: quantidadeAnterior,
+        quantidade_nova: quantidadeNova,
+        motivo: motivoTrimmed,
+        data_movimentacao: new Date()
+      });
+
+      // Verificar se ficou abaixo do estoque mínimo
+      let alerta = null;
+      if (quantidadeNova <= peca.estoque_minimo) {
+        alerta = {
+          tipo: 'estoque_baixo',
+          mensagem: `ATENÇÃO: Estoque da peça "${peca.nome}" está em ${quantidadeNova} unidades (mínimo: ${peca.estoque_minimo})!`
+        };
+      }
+
+      return {
+        peca_nome: peca.nome,
+        quantidade_nova: quantidadeNova,
+        alerta
+      };
+    });
+
+    res.json({
+      sucesso: true,
+      mensagem: `Saída registrada com sucesso! Estoque atualizado para ${resultado.quantidade_nova} unidades`,
+      dados: resultado
+    });
+
+  } catch (erro) {
+    console.error('Erro ao dar saída:', erro);
+    res.status(500).json({
+      erro: erro.message || 'Erro ao registrar saída de estoque'
+    });
   }
 }
 

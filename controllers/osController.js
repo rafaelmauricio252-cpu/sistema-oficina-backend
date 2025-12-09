@@ -5,6 +5,44 @@
 import db from '../config/db.js';
 
 /**
+ * Registra movimentação de estoque
+ * @param {Object} trx - Transação Knex
+ * @param {Object} dados - { peca_id, os_id, usuario_id, tipo, quantidade, motivo }
+ */
+async function registrarMovimentacaoEstoque(trx, dados) {
+  const { peca_id, os_id, usuario_id, tipo, quantidade, motivo } = dados;
+
+  // Buscar quantidade atual da peça
+  const peca = await trx('pecas').where({ id: peca_id }).first('quantidade_estoque');
+
+  if (!peca) {
+    throw new Error(`Peça ${peca_id} não encontrada`);
+  }
+
+  let quantidadeAnterior, quantidadeNova;
+
+  if (tipo === 'ENTRADA') {
+    quantidadeAnterior = peca.quantidade_estoque - quantidade;
+    quantidadeNova = peca.quantidade_estoque;
+  } else { // SAIDA
+    quantidadeAnterior = peca.quantidade_estoque + quantidade;
+    quantidadeNova = peca.quantidade_estoque;
+  }
+
+  await trx('estoque_movimentacao').insert({
+    peca_id,
+    os_id,
+    usuario_id,
+    tipo_movimentacao: tipo,
+    quantidade: tipo === 'SAIDA' ? -quantidade : quantidade,
+    quantidade_anterior: quantidadeAnterior,
+    quantidade_nova: quantidadeNova,
+    motivo,
+    data_movimentacao: new Date()
+  });
+}
+
+/**
  * Criar nova Ordem de Serviço
  * POST /api/os
  */
@@ -131,6 +169,18 @@ async function criarOS(req, res) {
           await trx('pecas')
             .where({ id: peca.peca_id })
             .decrement('quantidade_estoque', peca.quantidade);
+        }
+
+        // Registrar movimentações de estoque
+        for (const peca of pecas) {
+          await registrarMovimentacaoEstoque(trx, {
+            peca_id: peca.peca_id,
+            os_id: novaOS.id,
+            usuario_id: req.usuario.id,
+            tipo: 'SAIDA',
+            quantidade: peca.quantidade,
+            motivo: `Utilização na OS #${novaOS.id}`
+          });
         }
       }
 
@@ -354,6 +404,17 @@ async function atualizarOS(req, res) {
           await trx('pecas')
             .where({ id: pecaRemover.peca_id })
             .increment('quantidade_estoque', pecaRemover.quantidade);
+
+          // Registrar movimentação de entrada (devolução)
+          await registrarMovimentacaoEstoque(trx, {
+            peca_id: pecaRemover.peca_id,
+            os_id: id,
+            usuario_id: req.usuario.id,
+            tipo: 'ENTRADA',
+            quantidade: pecaRemover.quantidade,
+            motivo: `Remoção de peça da OS #${id}`
+          });
+
           await trx('os_pecas').where({ os_id: id, peca_id: pecaRemover.peca_id }).del();
         }
 
@@ -369,25 +430,66 @@ async function atualizarOS(req, res) {
           const quantidadeAntiga = pecaExistenteNaOS ? pecaExistenteNaOS.quantidade : 0;
           const diferencaQuantidade = pecaNova.quantidade - quantidadeAntiga;
 
-          if (diferencaQuantidade > 0) { // Aumentou a quantidade, verificar estoque
-            if (pecaMestra.quantidade_estoque <= diferencaQuantidade) {
-              throw new Error(`Estoque insuficiente para ${pecaMestra.nome}. Disponível: ${pecaMestra.quantidade_estoque}, Solicitado adicional: ${diferencaQuantidade}`);
-            }
-            await trx('pecas').where({ id: pecaNova.peca_id }).decrement('quantidade_estoque', diferencaQuantidade);
-          } else if (diferencaQuantidade < 0) { // Diminuiu a quantidade, devolver ao estoque
-            await trx('pecas').where({ id: pecaNova.peca_id }).increment('quantidade_estoque', Math.abs(diferencaQuantidade));
-          }
-
           if (pecaExistenteNaOS) {
+            // Peça já existia na OS - processar ajuste de quantidade
+            if (diferencaQuantidade > 0) { // Aumentou a quantidade, verificar estoque
+              if (pecaMestra.quantidade_estoque < diferencaQuantidade) {
+                throw new Error(`Estoque insuficiente para ${pecaMestra.nome}. Disponível: ${pecaMestra.quantidade_estoque}, Solicitado adicional: ${diferencaQuantidade}`);
+              }
+              await trx('pecas').where({ id: pecaNova.peca_id }).decrement('quantidade_estoque', diferencaQuantidade);
+
+              // Registrar movimentação de saída (aumento de quantidade)
+              await registrarMovimentacaoEstoque(trx, {
+                peca_id: pecaNova.peca_id,
+                os_id: id,
+                usuario_id: req.usuario.id,
+                tipo: 'SAIDA',
+                quantidade: diferencaQuantidade,
+                motivo: `Ajuste na OS #${id} (aumento de quantidade)`
+              });
+            } else if (diferencaQuantidade < 0) { // Diminuiu a quantidade, devolver ao estoque
+              await trx('pecas').where({ id: pecaNova.peca_id }).increment('quantidade_estoque', Math.abs(diferencaQuantidade));
+
+              // Registrar movimentação de entrada (redução de quantidade)
+              await registrarMovimentacaoEstoque(trx, {
+                peca_id: pecaNova.peca_id,
+                os_id: id,
+                usuario_id: req.usuario.id,
+                tipo: 'ENTRADA',
+                quantidade: Math.abs(diferencaQuantidade),
+                motivo: `Ajuste na OS #${id} (redução de quantidade)`
+              });
+            }
+
+            // Atualizar registro em os_pecas
             await trx('os_pecas')
               .where({ os_id: id, peca_id: pecaNova.peca_id })
               .update({ quantidade: pecaNova.quantidade, preco_unitario: pecaNova.preco_unitario });
           } else {
+            // Peça adicionada pela primeira vez - validar estoque
+            if (pecaMestra.quantidade_estoque < pecaNova.quantidade) {
+              throw new Error(`Estoque insuficiente para ${pecaMestra.nome}. Disponível: ${pecaMestra.quantidade_estoque}, Solicitado: ${pecaNova.quantidade}`);
+            }
+
+            // Dar baixa no estoque
+            await trx('pecas').where({ id: pecaNova.peca_id }).decrement('quantidade_estoque', pecaNova.quantidade);
+
+            // Inserir em os_pecas
             await trx('os_pecas').insert({
               os_id: id,
               peca_id: pecaNova.peca_id,
               quantidade: pecaNova.quantidade,
               preco_unitario: pecaNova.preco_unitario
+            });
+
+            // Registrar movimentação de saída (nova peça adicionada) - ÚNICO REGISTRO
+            await registrarMovimentacaoEstoque(trx, {
+              peca_id: pecaNova.peca_id,
+              os_id: id,
+              usuario_id: req.usuario.id,
+              tipo: 'SAIDA',
+              quantidade: pecaNova.quantidade,
+              motivo: `Adição de peça na OS #${id}`
             });
           }
         }
@@ -517,6 +619,18 @@ async function deletarOS(req, res) {
         await trx('pecas')
           .where({ id: peca.peca_id })
           .increment('quantidade_estoque', peca.quantidade);
+      }
+
+      // Registrar movimentações de estoque
+      for (const peca of pecasOS) {
+        await registrarMovimentacaoEstoque(trx, {
+          peca_id: peca.peca_id,
+          os_id: id,
+          usuario_id: req.usuario.id,
+          tipo: 'ENTRADA',
+          quantidade: peca.quantidade,
+          motivo: `Cancelamento da OS #${id}`
+        });
       }
 
       // Deletar OS (cascade deve remover os itens)

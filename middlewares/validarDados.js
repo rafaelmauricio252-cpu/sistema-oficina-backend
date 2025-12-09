@@ -259,11 +259,17 @@ function validarOS(req, res, next) {
 
 /**
  * Valida parâmetro ID (deve ser número inteiro positivo)
+ * Aceita tanto 'id' quanto outros nomes de parâmetro (peca_id, cliente_id, etc)
  */
 function validarID(req, res, next) {
-  const { id } = req.params;
+  // Pegar o primeiro parâmetro disponível (id, peca_id, cliente_id, etc)
+  const paramValue = req.params.id || req.params.peca_id || req.params.cliente_id || req.params.veiculo_id;
 
-  const idNum = parseInt(id);
+  if (!paramValue) {
+    return res.status(400).json({ erro: 'ID não fornecido' });
+  }
+
+  const idNum = parseInt(paramValue);
 
   if (isNaN(idNum) || idNum <= 0) {
     return res.status(400).json({ erro: 'ID inválido' });

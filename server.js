@@ -49,7 +49,7 @@ app.use(helmet({
 
 // Middleware de CORS
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || ['https://sistema-oficina-frontend-xpgo.onrender.com', 'http://localhost:5173'],
+  origin: process.env.CORS_ORIGIN || ['https://sistema-oficina-frontend-xpgo.onrender.com', 'http://localhost:5173', 'http://localhost:5174'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: false

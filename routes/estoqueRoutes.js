@@ -5,6 +5,7 @@
 import express from 'express';
 const router = express.Router();
 import estoqueController from '../controllers/estoqueController.js';
+import { darEntrada, darSaida } from '../controllers/estoqueController.js';
 import { validarID } from '../middlewares/validarDados.js';
 import { autenticar, verificarPermissao } from '../middlewares/autenticar.js';
 
@@ -37,8 +38,16 @@ router.get('/validar', estoqueController.validarEstoque);
 router.get('/baixo', estoqueController.buscarEstoqueBaixo);
 
 // Buscar histórico de movimentação de uma peça
-// GET /api/estoque/:peca_id/historico
+// GET /api/pecas/:peca_id/historico
 router.get('/:peca_id/historico', validarID, estoqueController.buscarHistoricoMovimentacao);
+
+// Registrar entrada manual de estoque
+// POST /api/pecas/entrada
+router.post('/entrada', darEntrada);
+
+// Registrar saída manual de estoque
+// POST /api/pecas/saida
+router.post('/saida', darSaida);
 
 // Listar todas as peças (com paginação)
 // GET /api/pecas?pagina=1&limite=20
