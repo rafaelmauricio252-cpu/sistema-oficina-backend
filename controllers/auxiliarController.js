@@ -544,7 +544,7 @@ async function obterEstatisticas(req, res) {
       // Peças com estoque baixo
       db('pecas')
         .whereRaw('quantidade_estoque <= estoque_minimo')
-        .select('id', 'nome', 'codigo', 'quantidade_estoque', 'estoque_minimo')
+        .select('id', 'nome', 'numero_peca as codigo', 'quantidade_estoque', 'estoque_minimo')
         .orderBy('quantidade_estoque', 'asc')
         .limit(10),
 
