@@ -438,7 +438,7 @@ async function deletarPeca(req, res) {
  * POST /api/estoque/entrada
  */
 export async function darEntrada(req, res) {
-  const { peca_id, quantidade, motivo } = req.body;
+  const { peca_id, quantidade, motivo, preco_custo, preco_venda } = req.body;
 
   // Validações
   if (!peca_id || !quantidade || !motivo) {
@@ -461,6 +461,23 @@ export async function darEntrada(req, res) {
     });
   }
 
+  // Validação de preços opcionais
+  if (preco_custo !== undefined && preco_custo !== null) {
+    if (isNaN(preco_custo) || preco_custo <= 0) {
+      return res.status(400).json({
+        erro: 'Preço de custo deve ser um número maior que zero'
+      });
+    }
+  }
+
+  if (preco_venda !== undefined && preco_venda !== null) {
+    if (isNaN(preco_venda) || preco_venda <= 0) {
+      return res.status(400).json({
+        erro: 'Preço de venda deve ser um número maior que zero'
+      });
+    }
+  }
+
   try {
     const resultado = await db.transaction(async (trx) => {
       // Buscar peça atual
@@ -473,13 +490,24 @@ export async function darEntrada(req, res) {
       const quantidadeAnterior = peca.quantidade_estoque;
       const quantidadeNova = quantidadeAnterior + qtd;
 
-      // Atualizar estoque
+      // Montar dados de atualização
+      const dadosAtualizacao = {
+        quantidade_estoque: quantidadeNova,
+        atualizado_em: new Date()
+      };
+
+      // Adicionar preços se fornecidos
+      if (preco_custo !== undefined && preco_custo !== null) {
+        dadosAtualizacao.preco_custo = preco_custo;
+      }
+      if (preco_venda !== undefined && preco_venda !== null) {
+        dadosAtualizacao.preco_venda = preco_venda;
+      }
+
+      // Atualizar estoque e preços
       await trx('pecas')
         .where({ id: peca_id })
-        .update({
-          quantidade_estoque: quantidadeNova,
-          atualizado_em: new Date()
-        });
+        .update(dadosAtualizacao);
 
       // Registrar movimentação
       await trx('estoque_movimentacao').insert({
@@ -496,13 +524,19 @@ export async function darEntrada(req, res) {
 
       return {
         peca_nome: peca.nome,
-        quantidade_nova: quantidadeNova
+        quantidade_nova: quantidadeNova,
+        precos_atualizados: !!(preco_custo || preco_venda)
       };
     });
 
+    let mensagem = `Entrada registrada com sucesso! Estoque atualizado para ${resultado.quantidade_nova} unidades`;
+    if (resultado.precos_atualizados) {
+      mensagem += '. Preços atualizados!';
+    }
+
     res.json({
       sucesso: true,
-      mensagem: `Entrada registrada com sucesso! Estoque atualizado para ${resultado.quantidade_nova} unidades`,
+      mensagem,
       dados: resultado
     });
 

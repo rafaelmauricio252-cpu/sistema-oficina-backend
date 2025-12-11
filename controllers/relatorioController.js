@@ -87,7 +87,10 @@ async function gerarRelatorioOS(req, res) {
 
     // Aplicar filtros
     if (filtros.data_inicio && filtros.data_fim) {
-      query = query.whereBetween('os.data_abertura', [filtros.data_inicio, filtros.data_fim]);
+      // Adicionar hora para incluir o dia inteiro
+      const dataInicioCompleta = `${filtros.data_inicio} 00:00:00`;
+      const dataFimCompleta = `${filtros.data_fim} 23:59:59`;
+      query = query.whereBetween('os.data_abertura', [dataInicioCompleta, dataFimCompleta]);
     }
 
     if (filtros.status) {
@@ -108,7 +111,7 @@ async function gerarRelatorioOS(req, res) {
       query = query.where(function () {
         this.where('c.nome', 'ilike', `%${busca}%`)
           .orWhere('v.placa', 'ilike', `%${busca}%`)
-          .orWhere('os.id', 'ilike', `%${busca}%`);
+          .orWhere(db.raw("os.id::text"), 'ilike', `%${busca}%`);
       });
     }
 
@@ -141,7 +144,9 @@ async function gerarRelatorioOS(req, res) {
 
     // Aplicar os mesmos filtros aos totalizadores
     if (filtros.data_inicio && filtros.data_fim) {
-      totalizadoresQuery = totalizadoresQuery.whereBetween('os.data_abertura', [filtros.data_inicio, filtros.data_fim]);
+      const dataInicioCompleta = `${filtros.data_inicio} 00:00:00`;
+      const dataFimCompleta = `${filtros.data_fim} 23:59:59`;
+      totalizadoresQuery = totalizadoresQuery.whereBetween('os.data_abertura', [dataInicioCompleta, dataFimCompleta]);
     }
 
     if (filtros.status) {
@@ -161,7 +166,7 @@ async function gerarRelatorioOS(req, res) {
       totalizadoresQuery = totalizadoresQuery.where(function () {
         this.where('c.nome', 'ilike', `%${busca}%`)
           .orWhere('v.placa', 'ilike', `%${busca}%`)
-          .orWhere('os.id', 'ilike', `%${busca}%`);
+          .orWhere(db.raw("os.id::text"), 'ilike', `%${busca}%`);
       });
     }
 
@@ -276,7 +281,9 @@ async function gerarRelatorioFinanceiro(req, res) {
 
     // Aplicar filtros (usar data_fechamento para relatório financeiro)
     if (filtros.data_inicio && filtros.data_fim) {
-      query = query.whereBetween('os.data_fechamento', [filtros.data_inicio, filtros.data_fim]);
+      const dataInicioCompleta = `${filtros.data_inicio} 00:00:00`;
+      const dataFimCompleta = `${filtros.data_fim} 23:59:59`;
+      query = query.whereBetween('os.data_fechamento', [dataInicioCompleta, dataFimCompleta]);
     }
 
     if (filtros.mecanico_id) {
@@ -293,7 +300,7 @@ async function gerarRelatorioFinanceiro(req, res) {
       query = query.where(function () {
         this.where('c.nome', 'ilike', `%${busca}%`)
           .orWhere('v.placa', 'ilike', `%${busca}%`)
-          .orWhere('os.id', 'ilike', `%${busca}%`);
+          .orWhere(db.raw("os.id::text"), 'ilike', `%${busca}%`);
       });
     }
 
@@ -317,7 +324,9 @@ async function gerarRelatorioFinanceiro(req, res) {
 
     // Aplicar os mesmos filtros aos totalizadores
     if (filtros.data_inicio && filtros.data_fim) {
-      totalizadoresQuery = totalizadoresQuery.whereBetween('os.data_fechamento', [filtros.data_inicio, filtros.data_fim]);
+      const dataInicioCompleta = `${filtros.data_inicio} 00:00:00`;
+      const dataFimCompleta = `${filtros.data_fim} 23:59:59`;
+      totalizadoresQuery = totalizadoresQuery.whereBetween('os.data_fechamento', [dataInicioCompleta, dataFimCompleta]);
     }
 
     if (filtros.mecanico_id) {
@@ -333,7 +342,7 @@ async function gerarRelatorioFinanceiro(req, res) {
       totalizadoresQuery = totalizadoresQuery.where(function () {
         this.where('c.nome', 'ilike', `%${busca}%`)
           .orWhere('v.placa', 'ilike', `%${busca}%`)
-          .orWhere('os.id', 'ilike', `%${busca}%`);
+          .orWhere(db.raw("os.id::text"), 'ilike', `%${busca}%`);
       });
     }
 
@@ -345,14 +354,14 @@ async function gerarRelatorioFinanceiro(req, res) {
       .leftJoin('clientes as c', 'os.cliente_id', 'c.id')
       .leftJoin('veiculos as v', 'os.veiculo_id', 'v.id')
       .where('os.status', 'Pago')
-      .sum('oss.preco_servico as total');
+      .select(db.raw('SUM(oss.preco_servico) as total'));
 
     let totalPecasQuery = db('os_pecas as osp')
       .join('ordem_servico as os', 'osp.os_id', 'os.id')
       .leftJoin('clientes as c', 'os.cliente_id', 'c.id')
       .leftJoin('veiculos as v', 'os.veiculo_id', 'v.id')
       .where('os.status', 'Pago')
-      .sum(db.raw('osp.quantidade * osp.preco_unitario as total'));
+      .select(db.raw('SUM(osp.quantidade * osp.preco_unitario) as total'));
 
     // Aplicar filtros aos totais de serviços e peças
     if (filtros.data_inicio && filtros.data_fim) {
@@ -375,12 +384,12 @@ async function gerarRelatorioFinanceiro(req, res) {
       totalServicosQuery = totalServicosQuery.where(function () {
         this.where('c.nome', 'ilike', `%${busca}%`)
           .orWhere('v.placa', 'ilike', `%${busca}%`)
-          .orWhere('os.id', 'ilike', `%${busca}%`);
+          .orWhere(db.raw("os.id::text"), 'ilike', `%${busca}%`);
       });
       totalPecasQuery = totalPecasQuery.where(function () {
         this.where('c.nome', 'ilike', `%${busca}%`)
           .orWhere('v.placa', 'ilike', `%${busca}%`)
-          .orWhere('os.id', 'ilike', `%${busca}%`);
+          .orWhere(db.raw("os.id::text"), 'ilike', `%${busca}%`);
       });
     }
 
@@ -430,7 +439,7 @@ async function gerarRelatorioEstoque(req, res) {
 
     // Validação de campos permitidos
     const camposPermitidos = [
-      'codigo', 'nome', 'descricao', 'quantidade_estoque', 'estoque_minimo',
+      'codigo', 'nome', 'categoria', 'descricao', 'quantidade_estoque', 'estoque_minimo',
       'preco_custo', 'preco_venda', 'valor_total_custo', 'valor_total_venda',
       'margem_lucro', 'status_estoque', 'localizacao_estoque', 'fornecedor'
     ];
@@ -448,13 +457,15 @@ async function gerarRelatorioEstoque(req, res) {
     const camposFinais = campos.length > 0 ? campos : camposPermitidos;
 
     // Construir query base
-    let query = db('pecas as p');
+    let query = db('pecas as p')
+      .leftJoin('categorias_pecas as cat', 'p.categoria_id', 'cat.id');
 
     // Mapear campos solicitados para SELECT
     const selectFields = [];
     const campoMap = {
       'codigo': 'p.numero_peca as codigo',
       'nome': 'p.nome',
+      'categoria': 'cat.nome as categoria',
       'descricao': 'p.descricao',
       'quantidade_estoque': 'p.quantidade_estoque',
       'estoque_minimo': 'p.estoque_minimo',

@@ -444,6 +444,48 @@ async function listarCategorias(req, res) {
 }
 
 /**
+ * Criar nova categoria de peça
+ * POST /api/categorias
+ */
+async function criarCategoria(req, res) {
+  try {
+    const { nome, descricao } = req.body;
+
+    // Validações
+    if (!nome || nome.trim() === '') {
+      return res.status(400).json({ erro: 'Nome da categoria é obrigatório' });
+    }
+
+    // Verificar se já existe categoria com mesmo nome
+    const categoriaExistente = await db('categorias_pecas')
+      .whereRaw('LOWER(nome) = LOWER(?)', [nome.trim()])
+      .first();
+
+    if (categoriaExistente) {
+      return res.status(400).json({ erro: 'Já existe uma categoria com este nome' });
+    }
+
+    // Criar categoria
+    const [novaCategoria] = await db('categorias_pecas')
+      .insert({
+        nome: nome.trim(),
+        descricao: descricao?.trim() || null
+      })
+      .returning(['id', 'nome', 'descricao']);
+
+    res.status(201).json({
+      sucesso: true,
+      mensagem: 'Categoria criada com sucesso',
+      categoria: novaCategoria
+    });
+
+  } catch (erro) {
+    console.error('Erro ao criar categoria:', erro);
+    res.status(500).json({ erro: 'Erro ao criar categoria' });
+  }
+}
+
+/**
  * Dashboard - Estatísticas gerais
  * GET /api/dashboard
  */
@@ -643,5 +685,6 @@ export default {
   atualizarServico,
   deletarServico,
   listarCategorias,
+  criarCategoria,
   obterEstatisticas
 };

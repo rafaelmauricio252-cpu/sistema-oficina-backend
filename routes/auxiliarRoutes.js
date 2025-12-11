@@ -72,6 +72,10 @@ router.delete('/servicos/:id', autenticar, verificarPermissao('servicos'), valid
 // GET /api/categorias
 router.get('/categorias', autenticar, auxiliarController.listarCategorias);
 
+// Criar nova categoria de peça
+// POST /api/categorias
+router.post('/categorias', autenticar, auxiliarController.criarCategoria);
+
 // ============================================
 // ROTA DE DASHBOARD
 // ============================================
