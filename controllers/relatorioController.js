@@ -509,6 +509,16 @@ async function gerarRelatorioEstoque(req, res) {
       // Se for 'todos', não aplica filtro de situação
     }
 
+    // Filtro de estoque baixo
+    if (filtros.estoque_baixo === true) {
+      query = query.whereRaw('p.quantidade_estoque <= p.estoque_minimo');
+    }
+
+    // Filtro de categoria
+    if (filtros.categoria && filtros.categoria.trim() !== '') {
+      query = query.where('cat.nome', filtros.categoria.trim());
+    }
+
     // Busca textual
     if (filtros.busca && filtros.busca.trim() !== '') {
       const busca = filtros.busca.trim();
@@ -525,27 +535,36 @@ async function gerarRelatorioEstoque(req, res) {
     const dados = await query;
 
     // Calcular totalizadores
-    let totalizadoresQuery = db('pecas')
+    let totalizadoresQuery = db('pecas as p')
+      .leftJoin('categorias_pecas as cat', 'p.categoria_id', 'cat.id')
       .select(
         db.raw('COUNT(*) as total_pecas'),
-        db.raw('COALESCE(SUM(quantidade_estoque), 0) as quantidade_total'),
-        db.raw('COALESCE(SUM(quantidade_estoque * preco_custo), 0) as valor_total_custo'),
-        db.raw('COALESCE(SUM(quantidade_estoque * preco_venda), 0) as valor_total_venda'),
-        db.raw('COUNT(CASE WHEN quantidade_estoque <= estoque_minimo THEN 1 END) as pecas_estoque_baixo')
+        db.raw('COALESCE(SUM(p.quantidade_estoque), 0) as quantidade_total'),
+        db.raw('COALESCE(SUM(p.quantidade_estoque * p.preco_custo), 0) as valor_total_custo'),
+        db.raw('COALESCE(SUM(p.quantidade_estoque * p.preco_venda), 0) as valor_total_venda'),
+        db.raw('COUNT(CASE WHEN p.quantidade_estoque <= p.estoque_minimo THEN 1 END) as pecas_estoque_baixo')
       );
 
     // Aplicar filtros aos totalizadores
     if (filtros.situacao === 'baixo') {
-      totalizadoresQuery = totalizadoresQuery.whereRaw('quantidade_estoque <= estoque_minimo');
+      totalizadoresQuery = totalizadoresQuery.whereRaw('p.quantidade_estoque <= p.estoque_minimo');
     } else if (filtros.situacao === 'critico') {
-      totalizadoresQuery = totalizadoresQuery.where('quantidade_estoque', 0);
+      totalizadoresQuery = totalizadoresQuery.where('p.quantidade_estoque', 0);
+    }
+
+    if (filtros.estoque_baixo === true) {
+      totalizadoresQuery = totalizadoresQuery.whereRaw('p.quantidade_estoque <= p.estoque_minimo');
+    }
+
+    if (filtros.categoria && filtros.categoria.trim() !== '') {
+      totalizadoresQuery = totalizadoresQuery.where('cat.nome', filtros.categoria.trim());
     }
 
     if (filtros.busca && filtros.busca.trim() !== '') {
       const busca = filtros.busca.trim();
       totalizadoresQuery = totalizadoresQuery.where(function () {
-        this.where('numero_peca', 'ilike', `%${busca}%`)
-          .orWhere('nome', 'ilike', `%${busca}%`);
+        this.where('p.numero_peca', 'ilike', `%${busca}%`)
+          .orWhere('p.nome', 'ilike', `%${busca}%`);
       });
     }
 
