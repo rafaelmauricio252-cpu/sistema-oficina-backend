@@ -491,6 +491,7 @@ async function criarCategoria(req, res) {
  */
 async function obterEstatisticas(req, res) {
   try {
+    // Promise.all com tratamento de erro individual para melhor rastreamento
     const [
       osPorStatus,
       osMesAtual,
@@ -518,6 +519,10 @@ async function obterEstatisticas(req, res) {
             total: row.total,
             valor_total: row.sum || row.valor_total || 0
           }));
+        })
+        .catch(erro => {
+          console.error('Erro ao buscar OS por status:', erro);
+          throw erro;
         }),
 
       // OS do mês atual
@@ -530,23 +535,50 @@ async function obterEstatisticas(req, res) {
         .then(row => ({
           total: row.total,
           faturamento: row.sum || 0
-        })),
+        }))
+        .catch(erro => {
+          console.error('Erro ao buscar OS do mês atual:', erro);
+          throw erro;
+        }),
 
       // Total de clientes
-      db('clientes').count('* as total').first(),
+      db('clientes')
+        .count('* as total')
+        .first()
+        .catch(erro => {
+          console.error('Erro ao buscar total de clientes:', erro);
+          throw erro;
+        }),
 
       // Total de veículos
-      db('veiculos').count('* as total').first(),
+      db('veiculos')
+        .count('* as total')
+        .first()
+        .catch(erro => {
+          console.error('Erro ao buscar total de veículos:', erro);
+          throw erro;
+        }),
 
       // Total de mecânicos
-      db('mecanicos').count('* as total').first().then(row => parseInt(row.total)),
+      db('mecanicos')
+        .count('* as total')
+        .first()
+        .then(row => parseInt(row.total))
+        .catch(erro => {
+          console.error('Erro ao buscar total de mecânicos:', erro);
+          throw erro;
+        }),
 
       // Peças com estoque baixo
       db('pecas')
         .whereRaw('quantidade_estoque <= estoque_minimo')
         .select('id', 'nome', 'numero_peca as codigo', 'quantidade_estoque', 'estoque_minimo')
         .orderBy('quantidade_estoque', 'asc')
-        .limit(10),
+        .limit(10)
+        .catch(erro => {
+          console.error('Erro ao buscar peças com estoque baixo:', erro);
+          throw erro;
+        }),
 
       // OS por mecânico (top 5)
       db('mecanicos as m')
@@ -561,35 +593,55 @@ async function obterEstatisticas(req, res) {
           nome: row.nome,
           total_os: row.total_os,
           valor_total: row.sum || 0
-        }))),
+        })))
+        .catch(erro => {
+          console.error('Erro ao buscar ranking de mecânicos:', erro);
+          throw erro;
+        }),
 
       // OS Agendadas
       db('ordem_servico')
         .where({ status: 'Agendamento' })
         .count('* as total')
         .first()
-        .then(row => parseInt(row.total)),
+        .then(row => parseInt(row.total))
+        .catch(erro => {
+          console.error('Erro ao buscar OS agendadas:', erro);
+          throw erro;
+        }),
 
       // OS Em Andamento
       db('ordem_servico')
         .where({ status: 'Em Andamento' })
         .count('* as total')
         .first()
-        .then(row => parseInt(row.total)),
+        .then(row => parseInt(row.total))
+        .catch(erro => {
+          console.error('Erro ao buscar OS em andamento:', erro);
+          throw erro;
+        }),
 
       // OS Finalizadas
       db('ordem_servico')
         .where({ status: 'Finalizada' })
         .count('* as total')
         .first()
-        .then(row => parseInt(row.total)),
+        .then(row => parseInt(row.total))
+        .catch(erro => {
+          console.error('Erro ao buscar OS finalizadas:', erro);
+          throw erro;
+        }),
 
       // OS Pagas
       db('ordem_servico')
         .where({ status: 'Pago' })
         .count('* as total')
         .first()
-        .then(row => parseInt(row.total)),
+        .then(row => parseInt(row.total))
+        .catch(erro => {
+          console.error('Erro ao buscar OS pagas:', erro);
+          throw erro;
+        }),
 
       // Top 5 Serviços Mais Pedidos
       db('os_servicos')
@@ -602,7 +654,11 @@ async function obterEstatisticas(req, res) {
         .then(rows => rows.map(row => ({
           nome: row.nome,
           total: parseInt(row.total)
-        }))),
+        })))
+        .catch(erro => {
+          console.error('Erro ao buscar top serviços:', erro);
+          throw erro;
+        }),
 
       // Top 5 Peças Mais Utilizadas
       db('os_pecas')
@@ -616,6 +672,10 @@ async function obterEstatisticas(req, res) {
           nome: row.nome,
           total: parseInt(row.total)
         })))
+        .catch(erro => {
+          console.error('Erro ao buscar top peças:', erro);
+          throw erro;
+        })
     ]);
 
     res.json({
