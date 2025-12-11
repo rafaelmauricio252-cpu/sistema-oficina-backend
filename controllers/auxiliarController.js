@@ -502,7 +502,9 @@ async function obterEstatisticas(req, res) {
       osAgendadas,
       osEmAndamento,
       osFinalizadas,
-      osPagas
+      osPagas,
+      topServicos,
+      topPecas
     ] = await Promise.all([
       // Total de OS por status
       db('ordem_servico')
@@ -540,7 +542,11 @@ async function obterEstatisticas(req, res) {
       db('mecanicos').count('* as total').first().then(row => parseInt(row.total)),
 
       // Peças com estoque baixo
-      db('pecas').whereRaw('quantidade_estoque <= estoque_minimo').count('* as total').first(),
+      db('pecas')
+        .whereRaw('quantidade_estoque <= estoque_minimo')
+        .select('id', 'nome', 'codigo', 'quantidade_estoque', 'estoque_minimo')
+        .orderBy('quantidade_estoque', 'asc')
+        .limit(10),
 
       // OS por mecânico (top 5)
       db('mecanicos as m')
@@ -620,14 +626,14 @@ async function obterEstatisticas(req, res) {
         total_clientes: parseInt(totalClientes.total),
         total_veiculos: parseInt(totalVeiculos.total),
         total_mecanicos: totalMecanicos,
-        pecas_estoque_baixo: parseInt(pecasEstoqueBaixo.total),
+        pecas_estoque_baixo: pecasEstoqueBaixo,
         mecanicos_ranking: mecanicosRanking,
         os_agendadas: osAgendadas,
         os_em_andamento: osEmAndamento,
         os_finalizadas: osFinalizadas,
         os_pagas: osPagas,
-        top_servicos: arguments[0][11], // O 12º elemento do Promise.all (índice 11)
-        top_pecas: arguments[0][12]     // O 13º elemento do Promise.all (índice 12)
+        top_servicos: topServicos,
+        top_pecas: topPecas
       }
     });
 
