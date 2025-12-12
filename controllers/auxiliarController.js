@@ -653,11 +653,11 @@ async function obterEstatisticas(req, res) {
         .limit(5)
         .then(rows => rows.map(row => ({
           nome: row.nome,
-          total: parseInt(row.total)
+          total: parseInt(row.total) || 0
         })))
         .catch(erro => {
           console.error('Erro ao buscar top serviços:', erro);
-          throw erro;
+          return [];
         }),
 
       // Top 5 Peças Mais Utilizadas
@@ -670,11 +670,11 @@ async function obterEstatisticas(req, res) {
         .limit(5)
         .then(rows => rows.map(row => ({
           nome: row.nome,
-          total: parseInt(row.total)
+          total: parseInt(row.total) || 0
         })))
         .catch(erro => {
           console.error('Erro ao buscar top peças:', erro);
-          throw erro;
+          return [];
         })
     ]);
 
